@@ -64,15 +64,22 @@ pub fn build_resource_moved_block(
     module_name: &str,
     path: &Path,
 ) -> Block {
+    // Create attributes with indentation
+    let mut from_attr = Attribute::new(
+        Ident::new("from"),
+        build_from_expression(resource_type, resource_name, false),
+    );
+    from_attr.decor_mut().set_prefix("  ");
+
+    let mut to_attr = Attribute::new(
+        Ident::new("to"),
+        build_to_expression(module_name, resource_type, resource_name, false),
+    );
+    to_attr.decor_mut().set_prefix("  ");
+
     let mut block = Block::builder(Ident::new("moved"))
-        .attribute(Attribute::new(
-            Ident::new("from"),
-            build_from_expression(resource_type, resource_name, false),
-        ))
-        .attribute(Attribute::new(
-            Ident::new("to"),
-            build_to_expression(module_name, resource_type, resource_name, false),
-        ))
+        .attribute(from_attr)
+        .attribute(to_attr)
         .build();
 
     // Add comment with filename
@@ -90,15 +97,22 @@ pub fn build_data_moved_block(
     module_name: &str,
     path: &Path,
 ) -> Block {
+    // Create attributes with indentation
+    let mut from_attr = Attribute::new(
+        Ident::new("from"),
+        build_from_expression(data_type, data_name, true),
+    );
+    from_attr.decor_mut().set_prefix("  ");
+
+    let mut to_attr = Attribute::new(
+        Ident::new("to"),
+        build_to_expression(module_name, data_type, data_name, true),
+    );
+    to_attr.decor_mut().set_prefix("  ");
+
     let mut block = Block::builder(Ident::new("moved"))
-        .attribute(Attribute::new(
-            Ident::new("from"),
-            build_from_expression(data_type, data_name, true),
-        ))
-        .attribute(Attribute::new(
-            Ident::new("to"),
-            build_to_expression(module_name, data_type, data_name, true),
-        ))
+        .attribute(from_attr)
+        .attribute(to_attr)
         .build();
 
     // Add comment with filename
@@ -348,6 +362,52 @@ resource "aws_instance" "web" {
         // Should be able to build moved block
         let moved_block = build_resource_moved_block("aws_instance", "web", "compute", &file);
         assert_eq!(moved_block.ident.value().to_string(), "moved");
+    }
+
+    #[test]
+    fn test_resource_moved_block_has_indented_attributes() {
+        let temp_dir = TempDir::new().unwrap();
+        let file = temp_dir.path().join("main.tf");
+        let block = build_resource_moved_block("aws_instance", "web", "compute", &file);
+        
+        // Convert block to string via Body
+        let body = Body::builder().block(block).build();
+        let output = body.to_string();
+        
+        // Assert output contains indented attributes
+        assert!(output.contains("  from"), "from attribute should be indented with 2 spaces");
+        assert!(output.contains("  to"), "to attribute should be indented with 2 spaces");
+        
+        // Assert comment is preserved
+        assert!(output.contains("# From: main.tf"), "Comment should be preserved");
+        
+        // Verify the structure
+        assert!(output.contains("moved {"));
+        assert!(output.contains("from = aws_instance.web"));
+        assert!(output.contains("to = module.compute.aws_instance.web"));
+    }
+
+    #[test]
+    fn test_data_moved_block_has_indented_attributes() {
+        let temp_dir = TempDir::new().unwrap();
+        let file = temp_dir.path().join("data.tf");
+        let block = build_data_moved_block("aws_ami", "example", "compute", &file);
+        
+        // Convert block to string via Body
+        let body = Body::builder().block(block).build();
+        let output = body.to_string();
+        
+        // Assert output contains indented attributes
+        assert!(output.contains("  from"), "from attribute should be indented with 2 spaces");
+        assert!(output.contains("  to"), "to attribute should be indented with 2 spaces");
+        
+        // Assert comment is preserved
+        assert!(output.contains("# From: data.tf"), "Comment should be preserved");
+        
+        // Verify the structure
+        assert!(output.contains("moved {"));
+        assert!(output.contains("from = data.aws_ami.example"));
+        assert!(output.contains("to = module.compute.data.aws_ami.example"));
     }
 }
 

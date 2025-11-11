@@ -81,5 +81,30 @@ mod tests {
         assert!(output.contains("# From: data.tf"));
         assert_eq!(output.matches("moved").count(), 2);
     }
+
+    #[test]
+    fn test_output_body_has_indented_attributes() {
+        let path1 = Path::new("main.tf");
+        let path2 = Path::new("data.tf");
+        let block1 = build_resource_moved_block("aws_instance", "web", "compute", path1);
+        let block2 = build_data_moved_block("aws_ami", "example", "compute", path2);
+        let body = build_output_body(&[block1, block2]);
+        let output = body.to_string();
+        
+        // Verify all attributes are indented
+        assert!(output.contains("  from"), "All from attributes should be indented");
+        assert!(output.contains("  to"), "All to attributes should be indented");
+        
+        // Verify all comments are preserved
+        assert!(output.contains("# From: main.tf"), "Resource block comment should be preserved");
+        assert!(output.contains("# From: data.tf"), "Data block comment should be preserved");
+        
+        // Verify structure
+        assert_eq!(output.matches("moved {").count(), 2);
+        assert!(output.contains("from = aws_instance.web"));
+        assert!(output.contains("to = module.compute.aws_instance.web"));
+        assert!(output.contains("from = data.aws_ami.example"));
+        assert!(output.contains("to = module.compute.data.aws_ami.example"));
+    }
 }
 

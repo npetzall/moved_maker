@@ -46,34 +46,6 @@ fn test_single_resource_file() {
 }
 
 #[test]
-fn test_single_data_file() {
-    let temp_dir = TempDir::new().unwrap();
-    let fixture_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("tests")
-        .join("fixtures")
-        .join("single_data.tf");
-    
-    fs::copy(&fixture_file, temp_dir.path().join("data.tf")).unwrap();
-    
-    let binary = get_binary_path();
-    let output = Command::new(&binary)
-        .arg("--src")
-        .arg(temp_dir.path())
-        .arg("--module-name")
-        .arg("compute")
-        .output()
-        .expect("Failed to execute command");
-    
-    assert!(output.status.success());
-    
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("# From: data.tf"));
-    assert!(stdout.contains("moved"));
-    assert!(stdout.contains("from = data.aws_ami.example"));
-    assert!(stdout.contains("to = module.compute.data.aws_ami.example"));
-}
-
-#[test]
 fn test_multiple_resources() {
     let temp_dir = TempDir::new().unwrap();
     let fixture_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -126,12 +98,13 @@ fn test_mixed_resources_and_data() {
     assert!(output.status.success());
     
     let stdout = String::from_utf8_lossy(&output.stdout);
-    // Should have 2 moved blocks (resource and data, but not variable or locals)
+    // Should have 1 moved block (resource only, data blocks are ignored)
     let moved_count = stdout.matches("moved").count();
-    assert_eq!(moved_count, 2);
+    assert_eq!(moved_count, 1);
     
     assert!(stdout.contains("aws_instance.web"));
-    assert!(stdout.contains("data.aws_ami.example"));
+    // Data blocks should not be processed
+    assert!(!stdout.contains("data.aws_ami.example"));
 }
 
 #[test]
@@ -156,12 +129,13 @@ fn test_multiple_files() {
     assert!(output.status.success());
     
     let stdout = String::from_utf8_lossy(&output.stdout);
-    // Should have 2 moved blocks from 2 files
+    // Should have 1 moved block (only from main.tf, data.tf is ignored)
     let moved_count = stdout.matches("moved").count();
-    assert_eq!(moved_count, 2);
+    assert_eq!(moved_count, 1);
     
     assert!(stdout.contains("# From: main.tf"));
-    assert!(stdout.contains("# From: data.tf"));
+    // Data blocks should not be processed
+    assert!(!stdout.contains("# From: data.tf"));
 }
 
 #[test]

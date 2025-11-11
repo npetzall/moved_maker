@@ -6,23 +6,19 @@ use hcl::edit::Decorate;
 use hcl::edit::parser::parse_body;
 use std::path::Path;
 
-/// Extract resource and data blocks from a parsed Body
+/// Extract resource blocks from a parsed Body
 pub fn extract_blocks(body: &Body) -> Vec<&Block> {
     body.blocks()
         .filter(|block| {
             let ident = block.ident.value().to_string();
-            ident == "resource" || ident == "data"
+            ident == "resource"
         })
         .collect()
 }
 
-/// Build a "from" expression for a resource or data block
-pub fn build_from_expression(resource_type: &str, resource_name: &str, is_data: bool) -> Expression {
-    let expr_str = if is_data {
-        format!("data.{}.{}", resource_type, resource_name)
-    } else {
-        format!("{}.{}", resource_type, resource_name)
-    };
+/// Build a "from" expression for a resource block
+pub fn build_from_expression(resource_type: &str, resource_name: &str) -> Expression {
+    let expr_str = format!("{}.{}", resource_type, resource_name);
     // Parse the expression string to get an Expression
     // Wrap in a simple attribute to parse it
     let attr_str = format!("x = {}", expr_str);
@@ -39,13 +35,8 @@ pub fn build_to_expression(
     module_name: &str,
     resource_type: &str,
     resource_name: &str,
-    is_data: bool,
 ) -> Expression {
-    let expr_str = if is_data {
-        format!("module.{}.data.{}.{}", module_name, resource_type, resource_name)
-    } else {
-        format!("module.{}.{}.{}", module_name, resource_type, resource_name)
-    };
+    let expr_str = format!("module.{}.{}.{}", module_name, resource_type, resource_name);
     // Parse the expression string to get an Expression
     // Wrap in a simple attribute to parse it
     let attr_str = format!("x = {}", expr_str);
@@ -67,46 +58,13 @@ pub fn build_resource_moved_block(
     // Create attributes with indentation
     let mut from_attr = Attribute::new(
         Ident::new("from"),
-        build_from_expression(resource_type, resource_name, false),
+        build_from_expression(resource_type, resource_name),
     );
     from_attr.decor_mut().set_prefix("  ");
 
     let mut to_attr = Attribute::new(
         Ident::new("to"),
-        build_to_expression(module_name, resource_type, resource_name, false),
-    );
-    to_attr.decor_mut().set_prefix("  ");
-
-    let mut block = Block::builder(Ident::new("moved"))
-        .attribute(from_attr)
-        .attribute(to_attr)
-        .build();
-
-    // Add comment with filename
-    let filename = path.file_name().expect("path must have filename").to_string_lossy();
-    let comment = format!("# From: {}\n", filename);
-    block.decor_mut().set_prefix(comment.as_str());
-
-    block
-}
-
-/// Build a moved block for a data source
-pub fn build_data_moved_block(
-    data_type: &str,
-    data_name: &str,
-    module_name: &str,
-    path: &Path,
-) -> Block {
-    // Create attributes with indentation
-    let mut from_attr = Attribute::new(
-        Ident::new("from"),
-        build_from_expression(data_type, data_name, true),
-    );
-    from_attr.decor_mut().set_prefix("  ");
-
-    let mut to_attr = Attribute::new(
-        Ident::new("to"),
-        build_to_expression(module_name, data_type, data_name, true),
+        build_to_expression(module_name, resource_type, resource_name),
     );
     to_attr.decor_mut().set_prefix("  ");
 
@@ -147,21 +105,6 @@ variable "test" {}
     }
 
     #[test]
-    fn test_extract_data_blocks() {
-        let temp_dir = TempDir::new().unwrap();
-        let file = temp_dir.path().join("data.tf");
-        fs::write(&file, r#"
-data "aws_ami" "example" {}
-variable "test" {}
-"#).unwrap();
-
-        let body = parse_terraform_file(&file).unwrap();
-        let blocks = extract_blocks(&body);
-        assert_eq!(blocks.len(), 1);
-        assert_eq!(blocks[0].ident.value().to_string(), "data");
-    }
-
-    #[test]
     fn test_ignore_other_block_types() {
         let temp_dir = TempDir::new().unwrap();
         let file = temp_dir.path().join("main.tf");
@@ -192,32 +135,21 @@ locals {
 
         let body = parse_terraform_file(&file).unwrap();
         let blocks = extract_blocks(&body);
-        assert_eq!(blocks.len(), 2);
+        assert_eq!(blocks.len(), 1);
+        assert_eq!(blocks[0].ident.value().to_string(), "resource");
     }
 
     #[test]
     fn test_build_from_expression_resource() {
-        let expr = build_from_expression("aws_instance", "web", false);
+        let expr = build_from_expression("aws_instance", "web");
         // We can't easily test the internal structure, but we can verify it's an Expression
         // The actual format will be verified in integration tests
         assert!(matches!(expr, Expression::Traversal(_)));
     }
 
     #[test]
-    fn test_build_from_expression_data() {
-        let expr = build_from_expression("aws_ami", "example", true);
-        assert!(matches!(expr, Expression::Traversal(_)));
-    }
-
-    #[test]
     fn test_build_to_expression_resource() {
-        let expr = build_to_expression("compute", "aws_instance", "web", false);
-        assert!(matches!(expr, Expression::Traversal(_)));
-    }
-
-    #[test]
-    fn test_build_to_expression_data() {
-        let expr = build_to_expression("compute", "aws_ami", "example", true);
+        let expr = build_to_expression("compute", "aws_instance", "web");
         assert!(matches!(expr, Expression::Traversal(_)));
     }
 
@@ -229,16 +161,6 @@ locals {
         
         assert_eq!(block.ident.value().to_string(), "moved");
         assert!(block.decor().prefix().unwrap_or(&"".into()).contains("From: main.tf"));
-    }
-
-    #[test]
-    fn test_build_data_moved_block() {
-        let temp_dir = TempDir::new().unwrap();
-        let file = temp_dir.path().join("data.tf");
-        let block = build_data_moved_block("aws_ami", "example", "compute", &file);
-        
-        assert_eq!(block.ident.value().to_string(), "moved");
-        assert!(block.decor().prefix().unwrap_or(&"".into()).contains("From: data.tf"));
     }
 
     #[test]
@@ -273,23 +195,6 @@ locals {
         assert_eq!(labels.len(), 2);
         assert_eq!(labels[0].to_string(), "aws_instance");
         assert_eq!(labels[1].to_string(), "web");
-    }
-
-    #[test]
-    fn test_extract_labels_from_data_block() {
-        let temp_dir = TempDir::new().unwrap();
-        let file = temp_dir.path().join("data.tf");
-        fs::write(&file, r#"data "aws_ami" "example" {}"#).unwrap();
-
-        let body = parse_terraform_file(&file).unwrap();
-        let blocks = extract_blocks(&body);
-        assert_eq!(blocks.len(), 1);
-        
-        let block = blocks[0];
-        let labels: Vec<_> = block.labels.iter().collect();
-        assert_eq!(labels.len(), 2);
-        assert_eq!(labels[0].to_string(), "aws_ami");
-        assert_eq!(labels[1].to_string(), "example");
     }
 
     #[test]
@@ -387,27 +292,5 @@ resource "aws_instance" "web" {
         assert!(output.contains("to = module.compute.aws_instance.web"));
     }
 
-    #[test]
-    fn test_data_moved_block_has_indented_attributes() {
-        let temp_dir = TempDir::new().unwrap();
-        let file = temp_dir.path().join("data.tf");
-        let block = build_data_moved_block("aws_ami", "example", "compute", &file);
-        
-        // Convert block to string via Body
-        let body = Body::builder().block(block).build();
-        let output = body.to_string();
-        
-        // Assert output contains indented attributes
-        assert!(output.contains("  from"), "from attribute should be indented with 2 spaces");
-        assert!(output.contains("  to"), "to attribute should be indented with 2 spaces");
-        
-        // Assert comment is preserved
-        assert!(output.contains("# From: data.tf"), "Comment should be preserved");
-        
-        // Verify the structure
-        assert!(output.contains("moved {"));
-        assert!(output.contains("from = data.aws_ami.example"));
-        assert!(output.contains("to = module.compute.data.aws_ami.example"));
-    }
 }
 

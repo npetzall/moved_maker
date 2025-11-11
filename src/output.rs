@@ -12,7 +12,7 @@ pub fn build_output_body(blocks: &[Block]) -> Body {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::processor::{build_data_moved_block, build_resource_moved_block};
+    use crate::processor::build_resource_moved_block;
     use std::path::Path;
 
     #[test]
@@ -58,36 +58,24 @@ mod tests {
     }
 
     #[test]
-    fn test_output_format_single_data() {
-        let path = Path::new("data.tf");
-        let block = build_data_moved_block("aws_ami", "example", "compute", path);
-        let body = build_output_body(&[block]);
-        let output = body.to_string();
-        
-        assert!(output.contains("# From: data.tf"));
-        assert!(output.contains("moved"));
-    }
-
-    #[test]
     fn test_output_format_multiple_blocks() {
         let path1 = Path::new("main.tf");
-        let path2 = Path::new("data.tf");
+        let path2 = Path::new("main.tf");
         let block1 = build_resource_moved_block("aws_instance", "web", "compute", path1);
-        let block2 = build_data_moved_block("aws_ami", "example", "compute", path2);
+        let block2 = build_resource_moved_block("aws_s3_bucket", "data", "compute", path2);
         let body = build_output_body(&[block1, block2]);
         let output = body.to_string();
         
         assert!(output.contains("# From: main.tf"));
-        assert!(output.contains("# From: data.tf"));
         assert_eq!(output.matches("moved").count(), 2);
     }
 
     #[test]
     fn test_output_body_has_indented_attributes() {
         let path1 = Path::new("main.tf");
-        let path2 = Path::new("data.tf");
+        let path2 = Path::new("main.tf");
         let block1 = build_resource_moved_block("aws_instance", "web", "compute", path1);
-        let block2 = build_data_moved_block("aws_ami", "example", "compute", path2);
+        let block2 = build_resource_moved_block("aws_s3_bucket", "data", "compute", path2);
         let body = build_output_body(&[block1, block2]);
         let output = body.to_string();
         
@@ -97,14 +85,13 @@ mod tests {
         
         // Verify all comments are preserved
         assert!(output.contains("# From: main.tf"), "Resource block comment should be preserved");
-        assert!(output.contains("# From: data.tf"), "Data block comment should be preserved");
         
         // Verify structure
         assert_eq!(output.matches("moved {").count(), 2);
         assert!(output.contains("from = aws_instance.web"));
         assert!(output.contains("to = module.compute.aws_instance.web"));
-        assert!(output.contains("from = data.aws_ami.example"));
-        assert!(output.contains("to = module.compute.data.aws_ami.example"));
+        assert!(output.contains("from = aws_s3_bucket.data"));
+        assert!(output.contains("to = module.compute.aws_s3_bucket.data"));
     }
 }
 

@@ -8,7 +8,7 @@ use clap::Parser;
 use cli::Args;
 use file_discovery::find_terraform_files;
 use parser::parse_terraform_file;
-use processor::{extract_blocks, build_resource_moved_block, build_data_moved_block};
+use processor::{extract_blocks, build_resource_moved_block};
 use output::build_output_body;
 
 fn main() {
@@ -34,13 +34,8 @@ fn main() {
 
                     let block_type = labels[0].to_string();
                     let block_name = labels[1].to_string();
-                    let is_data = block.ident.value().to_string() == "data";
 
-                    let moved_block = if is_data {
-                        build_data_moved_block(&block_type, &block_name, &args.module_name, &file)
-                    } else {
-                        build_resource_moved_block(&block_type, &block_name, &args.module_name, &file)
-                    };
+                    let moved_block = build_resource_moved_block(&block_type, &block_name, &args.module_name, &file);
 
                     moved_blocks.push(moved_block);
                 }

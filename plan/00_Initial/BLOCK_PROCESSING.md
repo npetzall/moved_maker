@@ -6,9 +6,7 @@
 - **Pattern**: `resource "<TYPE>" "<NAME>" { ... }`
 - **Example**: `resource "aws_instance" "web" { ... }`
 
-### Data Blocks
-- **Pattern**: `data "<TYPE>" "<NAME>" { ... }`
-- **Example**: `data "aws_ami" "example" { ... }`
+**Note**: Data blocks are not processed as they are lookup blocks that don't require `moved` blocks. Terraform will re-evaluate them in their new location.
 
 ## Block Extraction
 
@@ -21,13 +19,13 @@ fn extract_blocks(body: &Body) -> Vec<&Block> {
         .iter()
         .filter(|block| {
             let ident = block.ident.value().to_string();
-            ident == "resource" || ident == "data"
+            ident == "resource"
         })
         .collect()
 }
 ```
 
-**Note**: Use `body.blocks().iter()` to get an iterator, then filter for blocks with identifier "resource" or "data".
+**Note**: Use `body.blocks().iter()` to get an iterator, then filter for blocks with identifier "resource". Data blocks are ignored.
 
 ### Block Information Extraction
 
@@ -52,27 +50,6 @@ fn extract_resource_info(block: &Block) -> Option<(String, String)> {
 }
 ```
 
-#### Data Block
-```rust
-fn extract_data_info(block: &Block) -> Option<(String, String)> {
-    let ident = block.ident.value().to_string();
-    if ident != "data" {
-        return None;
-    }
-    
-    let labels: Vec<String> = block.labels
-        .iter()
-        .map(|l| l.value().to_string())
-        .collect();
-    
-    if labels.len() >= 2 {
-        Some((labels[0].clone(), labels[1].clone()))
-    } else {
-        None // Invalid data block (missing type or name)
-    }
-}
-```
-
 ## Address Generation
 
 ### Resource Address
@@ -83,15 +60,6 @@ fn extract_data_info(block: &Block) -> Option<(String, String)> {
 - Resource: `resource "aws_instance" "web"`
 - From: `aws_instance.web`
 - To: `module.compute.aws_instance.web`
-
-### Data Address
-- **From**: `data.{data_type}.{data_name}`
-- **To**: `module.{module_name}.data.{data_type}.{data_name}`
-
-**Example**:
-- Data: `data "aws_ami" "example"`
-- From: `data.aws_ami.example`
-- To: `module.compute.data.aws_ami.example`
 
 ## Moved Block Generation
 
@@ -115,32 +83,8 @@ fn build_resource_moved_block(
     path: &Path,
 ) -> Block {
     let mut block = Block::builder(Ident::new("moved"))
-        .attribute(Attribute::new("from", build_from_expression(resource_type, resource_name, false)))
-        .attribute(Attribute::new("to", build_to_expression(module_name, resource_type, resource_name, false)))
-        .build();
-    
-    // Add comment as prefix decor
-    let filename = path.file_name().expect("path must have filename").to_string_lossy();
-    let comment = format!("# From: {}\n", filename);
-    block.decor_mut().set_prefix(&comment);
-    
-    block
-}
-```
-
-#### For Data
-```rust
-use std::path::Path;
-
-fn build_data_moved_block(
-    data_type: &str,
-    data_name: &str,
-    module_name: &str,
-    path: &Path,
-) -> Block {
-    let mut block = Block::builder(Ident::new("moved"))
-        .attribute(Attribute::new("from", build_from_expression(data_type, data_name, true)))
-        .attribute(Attribute::new("to", build_to_expression(module_name, data_type, data_name, true)))
+        .attribute(Attribute::new("from", build_from_expression(resource_type, resource_name)))
+        .attribute(Attribute::new("to", build_to_expression(module_name, resource_type, resource_name)))
         .build();
     
     // Add comment as prefix decor
@@ -168,63 +112,35 @@ use hcl::edit::expr::Expression;
 
 // Utility function for building "from" expression (identifier traversal)
 // For resources: resource_type.resource_name
-// For data: data.data_type.data_name
 fn build_from_expression(
     resource_type: &str,
     resource_name: &str,
-    is_data: bool,
 ) -> Expression {
-    if is_data {
-        // Build: data.data_type.data_name
-        // Create traversal: data -> data_type -> data_name
-        let traversal = Traversal::builder(Variable::unchecked("data"))
-            .attr(resource_type)
-            .attr(resource_name)
-            .build();
-        // Convert hcl-rs Traversal to hcl-edit Expression via From/Into
-        traversal.into()
-    } else {
-        // Build: resource_type.resource_name
-        // Create traversal: resource_type -> resource_name
-        let traversal = Traversal::builder(Variable::unchecked(resource_type))
-            .attr(resource_name)
-            .build();
-        // Convert hcl-rs Traversal to hcl-edit Expression via From/Into
-        traversal.into()
-    }
+    // Build: resource_type.resource_name
+    // Create traversal: resource_type -> resource_name
+    let traversal = Traversal::builder(Variable::unchecked(resource_type))
+        .attr(resource_name)
+        .build();
+    // Convert hcl-rs Traversal to hcl-edit Expression via From/Into
+    traversal.into()
 }
 
 // Utility function for building "to" expression (module path)
 // For resources: module.module_name.resource_type.resource_name
-// For data: module.module_name.data.data_type.data_name
 fn build_to_expression(
     module_name: &str,
     resource_type: &str,
     resource_name: &str,
-    is_data: bool,
 ) -> Expression {
-    if is_data {
-        // Build: module.module_name.data.data_type.data_name
-        // Create traversal: module -> module_name -> data -> data_type -> data_name
-        let traversal = Traversal::builder(Variable::unchecked("module"))
-            .attr(module_name)
-            .attr("data")
-            .attr(resource_type)
-            .attr(resource_name)
-            .build();
-        // Convert hcl-rs Traversal to hcl-edit Expression via From/Into
-        traversal.into()
-    } else {
-        // Build: module.module_name.resource_type.resource_name
-        // Create traversal: module -> module_name -> resource_type -> resource_name
-        let traversal = Traversal::builder(Variable::unchecked("module"))
-            .attr(module_name)
-            .attr(resource_type)
-            .attr(resource_name)
-            .build();
-        // Convert hcl-rs Traversal to hcl-edit Expression via From/Into
-        traversal.into()
-    }
+    // Build: module.module_name.resource_type.resource_name
+    // Create traversal: module -> module_name -> resource_type -> resource_name
+    let traversal = Traversal::builder(Variable::unchecked("module"))
+        .attr(module_name)
+        .attr(resource_type)
+        .attr(resource_name)
+        .build();
+    // Convert hcl-rs Traversal to hcl-edit Expression via From/Into
+    traversal.into()
 }
 ```
 
@@ -236,11 +152,8 @@ let mut moved_blocks = Vec::new();
 for block in filtered_blocks {
     // Extract type and name from labels
     // Build decorated Block structure directly
-    let moved_block = match block.ident.value().to_string().as_str() {
-        "resource" => build_resource_moved_block(...),
-        "data" => build_data_moved_block(...),
-        _ => continue,
-    };
+    // Only resource blocks are processed (data blocks are ignored)
+    let moved_block = build_resource_moved_block(...);
     moved_blocks.push(moved_block);
 }
 ```

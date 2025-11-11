@@ -1,0 +1,85 @@
+use hcl::edit::structure::{Body, Block};
+
+/// Build the output Body from collected moved blocks
+pub fn build_output_body(blocks: &[Block]) -> Body {
+    let mut builder = Body::builder();
+    for block in blocks {
+        builder = builder.block(block.clone());
+    }
+    builder.build()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::processor::{build_data_moved_block, build_resource_moved_block};
+    use std::path::Path;
+
+    #[test]
+    fn test_build_body_from_single_block() {
+        let path = Path::new("test.tf");
+        let block = build_resource_moved_block("aws_instance", "web", "compute", path);
+        let body = build_output_body(&[block]);
+        
+        assert_eq!(body.blocks().count(), 1);
+    }
+
+    #[test]
+    fn test_build_body_from_multiple_blocks() {
+        let path = Path::new("test.tf");
+        let block1 = build_resource_moved_block("aws_instance", "web", "compute", path);
+        let block2 = build_resource_moved_block("aws_s3_bucket", "data", "compute", path);
+        let body = build_output_body(&[block1, block2]);
+        
+        assert_eq!(body.blocks().count(), 2);
+    }
+
+    #[test]
+    fn test_body_to_string_conversion() {
+        let path = Path::new("test.tf");
+        let block = build_resource_moved_block("aws_instance", "web", "compute", path);
+        let body = build_output_body(&[block]);
+        
+        let output = body.to_string();
+        assert!(output.contains("moved"));
+        assert!(output.contains("from"));
+        assert!(output.contains("to"));
+    }
+
+    #[test]
+    fn test_output_format_single_resource() {
+        let path = Path::new("main.tf");
+        let block = build_resource_moved_block("aws_instance", "web", "compute", path);
+        let body = build_output_body(&[block]);
+        let output = body.to_string();
+        
+        assert!(output.contains("# From: main.tf"));
+        assert!(output.contains("moved"));
+    }
+
+    #[test]
+    fn test_output_format_single_data() {
+        let path = Path::new("data.tf");
+        let block = build_data_moved_block("aws_ami", "example", "compute", path);
+        let body = build_output_body(&[block]);
+        let output = body.to_string();
+        
+        assert!(output.contains("# From: data.tf"));
+        assert!(output.contains("moved"));
+    }
+
+    #[test]
+    fn test_output_format_multiple_blocks() {
+        let path1 = Path::new("main.tf");
+        let path2 = Path::new("data.tf");
+        let block1 = build_resource_moved_block("aws_instance", "web", "compute", path1);
+        let block2 = build_data_moved_block("aws_ami", "example", "compute", path2);
+        let body = build_output_body(&[block1, block2]);
+        let output = body.to_string();
+        
+        assert!(output.contains("# From: main.tf"));
+        assert!(output.contains("# From: data.tf"));
+        assert_eq!(output.matches("moved").count(), 2);
+    }
+}
+

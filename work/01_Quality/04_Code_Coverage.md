@@ -1,12 +1,12 @@
 # Phase 4: Code Coverage Implementation Plan
 
 ## Overview
-Implement code coverage using cargo-llvm-cov to track and enforce coverage thresholds in CI/CD.
+Implement code coverage using cargo-llvm-cov to track and enforce coverage thresholds. CI/CD integration is handled in Phase 7 (Continuous Delivery).
 
 ## Goals
-- Generate code coverage reports
-- Enforce coverage thresholds in CI (Line > 80%, Branch > 70%, Function > 85%)
-- Integrate coverage reporting with CI/CD
+- Generate code coverage reports locally
+- Set up coverage thresholds (Line > 80%, Branch > 70%, Function > 85%)
+- Prepare for CI/CD integration (handled in Phase 7)
 - Track coverage over time
 
 ## Prerequisites
@@ -33,10 +33,16 @@ Implement code coverage using cargo-llvm-cov to track and enforce coverage thres
 
 ### 2. Generate Initial Coverage Report
 
+**Prerequisites:**
+- [ ] Verify tests exist and pass: `cargo test` (or `cargo nextest run` if Phase 2 is completed)
+- [ ] Ensure test suite is in a passing state before measuring coverage
+
 - [ ] Generate coverage report: `cargo llvm-cov --all-features`
+- [ ] View coverage summary in terminal: `cargo llvm-cov --all-features --summary-only`
 - [ ] Review coverage summary (line, branch, function percentages)
 - [ ] Generate HTML report: `cargo llvm-cov --html`
 - [ ] Open HTML report in browser: `open target/llvm-cov/html/index.html` (macOS) or `xdg-open target/llvm-cov/html/index.html` (Linux)
+  - Note: The HTML report is typically generated at `target/llvm-cov/html/index.html` by default
 - [ ] Review coverage by file and function
 - [ ] Identify areas with low coverage
 - [ ] Document current coverage baseline
@@ -44,11 +50,13 @@ Implement code coverage using cargo-llvm-cov to track and enforce coverage thres
 ### 3. Generate Coverage with cargo-nextest
 
 - [ ] Generate coverage with nextest: `cargo llvm-cov nextest --all-features`
+- [ ] View coverage summary: `cargo llvm-cov nextest --all-features --summary-only`
 - [ ] Verify coverage is generated correctly
 - [ ] Compare coverage with standard `cargo test` (if applicable)
 - [ ] Generate HTML report with nextest: `cargo llvm-cov nextest --all-features --html`
 - [ ] Review coverage report
 - [ ] Verify all tests are included in coverage
+- [ ] Note: Doctests (`cargo test --doc`) are not included in coverage by default
 
 ### 4. Set Coverage Thresholds
 
@@ -56,7 +64,7 @@ Implement code coverage using cargo-llvm-cov to track and enforce coverage thres
   - [ ] Line coverage: Current % → Target: > 80%
   - [ ] Branch coverage: Current % → Target: > 70%
   - [ ] Function coverage: Current % → Target: > 85%
-- [ ] Document coverage thresholds in `CODE_COVERAGE.md` (if exists) or project documentation
+- [ ] Document coverage thresholds in [CODE_COVERAGE.md](../plan/01_Quality/CODE_COVERAGE.md) or project documentation
 - [ ] Note: Thresholds are enforced in CI, not in local tooling
 - [ ] Plan to improve coverage if current coverage is below thresholds
 
@@ -69,102 +77,22 @@ Implement code coverage using cargo-llvm-cov to track and enforce coverage thres
   - [ ] Generated code (if any)
 - [ ] Create coverage exclusion configuration (if needed):
   - [ ] Review cargo-llvm-cov exclusion options
-  - [ ] Configure exclusions in CI workflow (if needed)
+  - [ ] Example: Use `--ignore-filename-regex` to exclude patterns:
+    ```bash
+    cargo llvm-cov nextest --all-features --ignore-filename-regex 'tests/.*|src/main.rs'
+    ```
+  - [ ] Note: CI exclusions are configured in CI workflow (see [07_Continuous_Delivery.md](07_Continuous_Delivery.md))
 - [ ] Document exclusions and reasoning
 
-### 6. Generate LCOV Format for CI
-
-- [ ] Generate LCOV format: `cargo llvm-cov nextest --all-features --lcov --output-path lcov.info`
-- [ ] Verify `lcov.info` file is created
-- [ ] Review LCOV file format
-- [ ] Test LCOV file can be uploaded to coverage services (if applicable)
-
-### 7. Integrate into CI Workflow
-
-#### Pull Request Workflow (`.github/workflows/pull_request.yaml`)
-- [ ] Open `.github/workflows/pull_request.yaml`
-- [ ] Add coverage job:
-  - [ ] Set runs-on: `ubuntu-latest`
-  - [ ] Add checkout step
-  - [ ] Add Rust installation with llvm-tools-preview:
-    ```yaml
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        components: llvm-tools-preview
-    ```
-  - [ ] Add cargo-nextest installation step
-  - [ ] Add cargo-llvm-cov installation step:
-    ```yaml
-    - name: Install cargo-llvm-cov
-      run: cargo install cargo-llvm-cov
-    ```
-  - [ ] Add coverage generation step:
-    ```yaml
-    - name: Generate coverage
-      run: cargo llvm-cov nextest --all-features --lcov --output-path lcov.info
-    ```
-  - [ ] Add coverage threshold check step:
-    ```yaml
-    - name: Check coverage thresholds
-      run: |
-        cargo llvm-cov nextest --all-features --summary-only
-        # Extract coverage percentages and check against thresholds
-        # Line > 80%, Branch > 70%, Function > 85%
-        # CI will fail if thresholds not met
-    ```
-  - [ ] Add coverage upload step (optional, for Codecov or similar):
-    ```yaml
-    - name: Upload to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        files: lcov.info
-        flags: unittests
-        name: codecov-umbrella
-    ```
-- [ ] Verify workflow syntax
-- [ ] Commit and push changes
-
-### 8. Implement Coverage Threshold Enforcement
-
-- [ ] Create script or workflow step to check coverage thresholds:
-  - [ ] Extract coverage percentages from `cargo llvm-cov` output
-  - [ ] Compare against thresholds (Line > 80%, Branch > 70%, Function > 85%)
-  - [ ] Fail CI if thresholds not met
-- [ ] Options for threshold checking:
-  - [ ] Use `cargo llvm-cov --summary-only` and parse output
-  - [ ] Use `cargo llvm-cov --json` and parse JSON
-  - [ ] Use external tool or script
-- [ ] Test threshold enforcement locally (if possible)
-- [ ] Add threshold check to CI workflow
-- [ ] Verify CI fails if thresholds are not met
-
-### 9. Configure Coverage Service (Optional)
-
-#### Codecov (Recommended)
-- [ ] Sign up for Codecov account (if not already)
-- [ ] Add repository to Codecov
-- [ ] Get Codecov token (if required)
-- [ ] Add Codecov upload step to CI workflow (already in step 7)
-- [ ] Configure Codecov settings:
-  - [ ] Set coverage thresholds
-  - [ ] Configure coverage reports
-  - [ ] Set up coverage badges (if desired)
-- [ ] Verify coverage reports appear in Codecov
-
-#### Alternative: Coveralls, Code Climate, etc.
-- [ ] Choose coverage service
-- [ ] Configure service
-- [ ] Add upload step to CI workflow
-- [ ] Verify coverage reports
-
-### 10. Improve Coverage (if needed)
+### 6. Improve Coverage (if needed)
 
 - [ ] Review coverage report to identify low-coverage areas
-- [ ] Prioritize areas to improve:
+- [ ] Prioritize areas to improve (in order):
+  - [ ] Core business logic (processor.rs, parser.rs)
   - [ ] Critical paths
   - [ ] Error handling paths
-  - [ ] Edge cases
+  - [ ] Edge cases and boundary conditions
+  - [ ] Utility functions
 - [ ] Add tests to improve coverage:
   - [ ] Add unit tests for uncovered functions
   - [ ] Add integration tests for uncovered paths
@@ -173,7 +101,7 @@ Implement code coverage using cargo-llvm-cov to track and enforce coverage thres
 - [ ] Verify coverage improvements
 - [ ] Repeat until thresholds are met
 
-### 11. Update Documentation
+### 7. Update Documentation
 
 - [ ] Update project README with coverage information:
   - [ ] How to generate coverage reports locally
@@ -183,16 +111,15 @@ Implement code coverage using cargo-llvm-cov to track and enforce coverage thres
 - [ ] Add coverage badge to README (if using Codecov or similar)
 - [ ] Update CONTRIBUTING.md (if exists) with coverage requirements
 
-### 12. Verification
+### 8. Verification
 
 - [ ] Generate coverage locally: `cargo llvm-cov nextest --all-features --html`
+- [ ] View coverage summary: `cargo llvm-cov nextest --all-features --summary-only`
 - [ ] Verify coverage report is generated correctly
+- [ ] Open and review HTML report to verify coverage visually
 - [ ] Verify coverage thresholds are met (or plan to improve)
-- [ ] Create test PR to verify CI coverage job runs
-- [ ] Verify coverage job passes in CI
-- [ ] Verify coverage thresholds are enforced in CI
-- [ ] Verify coverage reports are uploaded (if using service)
-- [ ] Review coverage trends over time
+- [ ] Verify local coverage tooling works correctly
+- [ ] Note: CI verification is handled in [07_Continuous_Delivery.md](07_Continuous_Delivery.md) Section 15
 
 ## Success Criteria
 
@@ -200,10 +127,8 @@ Implement code coverage using cargo-llvm-cov to track and enforce coverage thres
 - [ ] llvm-tools-preview component installed
 - [ ] Coverage reports can be generated locally
 - [ ] Coverage thresholds documented (Line > 80%, Branch > 70%, Function > 85%)
-- [ ] Coverage job added to CI workflow
-- [ ] Coverage thresholds enforced in CI
-- [ ] Coverage reports generated in CI
-- [ ] Coverage service configured (if applicable)
+- [ ] Local coverage tooling working correctly
+- [ ] Note: CI integration success criteria are in [07_Continuous_Delivery.md](07_Continuous_Delivery.md)
 - [ ] Current coverage meets or exceeds thresholds
 - [ ] Documentation updated
 
@@ -219,17 +144,45 @@ Implement code coverage using cargo-llvm-cov to track and enforce coverage thres
 - Main entry point (`src/main.rs` - minimal logic)
 - Error handling paths that are difficult to test
 
+## Troubleshooting
+
+### Coverage Report Not Generated
+- Verify llvm-tools-preview is installed: `rustup component list | grep llvm-tools`
+- Reinstall if needed: `rustup component add llvm-tools-preview`
+- Check that tests pass: `cargo nextest run`
+- Verify cargo-llvm-cov is installed: `cargo llvm-cov --version`
+
+### Coverage Percentages Seem Incorrect
+- Verify exclusions are working: Check that test files are excluded
+- Review HTML report to see which lines are covered
+- Ensure all tests are running: `cargo nextest list`
+- Check that coverage is generated with the same test command you use normally
+
+### HTML Report Not Opening
+- Verify report path: Check cargo-llvm-cov output for exact location
+- Try absolute path: `open $(pwd)/target/llvm-cov/html/index.html` (macOS) or `xdg-open $(pwd)/target/llvm-cov/html/index.html` (Linux)
+- Check that HTML report was actually generated (look for output messages)
+
+### Coverage Generation is Slow
+- This is normal; coverage collection adds overhead to test execution
+- Consider using `--summary-only` for quick checks
+- HTML reports can be large; generation may take time
+
 ## Notes
 
 - Coverage thresholds should be adjusted upward over time, not downward
 - Use `cargo llvm-cov nextest` for integration with cargo-nextest
 - LCOV format is standard for CI/CD integration
 - HTML reports are useful for local development
+- Use `--summary-only` for quick coverage checks without generating full reports
 - Coverage thresholds are enforced in CI, not in local tooling
+- Coverage generation may take longer than regular test runs
+- CI/CD integration is handled in Phase 7 (Continuous Delivery) - see [07_Continuous_Delivery.md](07_Continuous_Delivery.md)
 
 ## References
 
 - [cargo-llvm-cov Documentation](https://github.com/taiki-e/cargo-llvm-cov)
 - [Codecov Documentation](https://docs.codecov.com/)
 - [CODE_COVERAGE.md](../plan/01_Quality/CODE_COVERAGE.md) - Detailed coverage documentation
+- [07_Continuous_Delivery.md](07_Continuous_Delivery.md) - CI/CD integration for coverage
 

@@ -8,7 +8,6 @@ Configure pre-commit hooks to enforce code quality standards before commits, inc
 - Run tests before allowing commits
 - Validate commit messages follow Conventional Commits format
 - Catch issues early before they reach the repository
-- Integrate with CI for additional enforcement
 
 ## Prerequisites
 - [ ] Python 3.7+ installed (for pre-commit framework)
@@ -161,42 +160,14 @@ Configure pre-commit hooks to enforce code quality standards before commits, inc
 - [ ] Test hook execution time
 - [ ] Document any performance considerations
 
-### 9. Integrate into CI Workflow
-
-#### Pull Request Workflow (`.github/workflows/pull_request.yaml`)
-- [ ] Open `.github/workflows/pull_request.yaml`
-- [ ] Add pre-commit job:
-  ```yaml
-  pre-commit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      - uses: dtolnay/rust-toolchain@stable
-      
-      - name: Install pre-commit
-        run: pip install pre-commit
-      
-      - name: Install cargo-nextest
-        uses: taiki-e/install-action@cargo-nextest
-      
-      - name: Run pre-commit
-        run: pre-commit run --all-files
-  ```
-- [ ] Verify workflow syntax
-- [ ] Commit and push changes
-- [ ] Verify pre-commit job runs in CI
-
-### 10. Update Hook Versions
+### 9. Update Hook Versions
 
 - [ ] Update hook versions to latest: `pre-commit autoupdate`
 - [ ] Review updated versions
 - [ ] Test updated hooks: `pre-commit run --all-files`
 - [ ] Commit updated `.pre-commit-config.yaml` if changes were made
 
-### 11. Handle Doctests (if applicable)
+### 10. Handle Doctests (if applicable)
 
 - [ ] Verify if project has doctests: `cargo test --doc`
 - [ ] If doctests exist and need to be tested:
@@ -213,7 +184,7 @@ Configure pre-commit hooks to enforce code quality standards before commits, inc
   - [ ] Or document that doctests should be run separately
 - [ ] Test doctest hook (if added)
 
-### 12. Document Pre-commit Usage
+### 11. Document Pre-commit Usage
 
 - [ ] Update project README with pre-commit information:
   - [ ] How to install pre-commit
@@ -228,12 +199,11 @@ Configure pre-commit hooks to enforce code quality standards before commits, inc
 - [ ] Update CONTRIBUTING.md (if exists) with pre-commit requirements
 - [ ] Document troubleshooting steps
 
-### 13. Verification
+### 12. Verification
 
 - [ ] All hooks installed and working: `pre-commit run --all-files`
 - [ ] Hooks run automatically on commit
 - [ ] Commit message validation works
-- [ ] CI pre-commit job runs and passes
 - [ ] All team members can install and use pre-commit
 - [ ] Documentation is complete
 
@@ -245,8 +215,6 @@ Configure pre-commit hooks to enforce code quality standards before commits, inc
 - [ ] All hooks pass on existing codebase
 - [ ] Hooks run automatically on commit
 - [ ] Commit message validation works
-- [ ] Pre-commit job added to CI workflow
-- [ ] CI pre-commit job passes
 - [ ] Documentation updated
 
 ## Conventional Commits Format
@@ -313,7 +281,7 @@ chore: update dependencies
 ## Notes
 
 - Pre-commit hooks run locally before commits
-- CI also runs pre-commit checks for additional enforcement
+- CI integration is handled in Phase 7 (Continuous Delivery)
 - Hooks can be bypassed with `--no-verify`, but this is not recommended
 - Keep hooks updated with `pre-commit autoupdate`
 - Commit message validation uses Conventional Commits format

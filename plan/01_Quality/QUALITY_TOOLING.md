@@ -24,15 +24,15 @@ This plan is organized into the following documents:
 
 ### Dependencies
 
-**Note**: The following dependencies are selected and will be added when implementing Phase 1 and Phase 1.5:
+**Note**: The following dependencies are selected and will be added when implementing Phase 2 and Phase 3:
 
 Add to `Cargo.toml`:
 ```toml
 [dependencies]
-anyhow = "1.0"  # ✅ Selected - Will be added in Phase 1.5
+anyhow = "1.0"  # ✅ Selected - Will be added in Phase 3
 
 [dev-dependencies]
-pretty_assertions = "1.4"  # ✅ Selected - Will be added in Phase 1
+pretty_assertions = "1.4"  # ✅ Selected - Will be added in Phase 2
 tempfile = "3.10"  # Already present
 ```
 
@@ -65,13 +65,13 @@ cargo geiger
 
 ## Implementation Phases
 
-0. **Phase 0**: GitHub Configuration - See [GITHUB.md](GITHUB.md)
-0.5. **Phase 0.5**: Pre-commit Hooks - See [PRE_COMMIT.md](PRE_COMMIT.md)
-1. **Phase 1**: Test Runner (cargo-nextest) + Testing Utilities (pretty_assertions) - See [TEST_RUNNER.md](TEST_RUNNER.md)
-2. **Phase 1.5**: Error Handling (anyhow) - See [ERROR_HANDLING.md](ERROR_HANDLING.md)
-3. **Phase 2**: Coverage (cargo-llvm-cov - SELECTED) - See [CODE_COVERAGE.md](CODE_COVERAGE.md)
-4. **Phase 2.5**: Security (cargo-deny, cargo-audit, cargo-geiger, cargo-auditable) - See [SECURITY.md](SECURITY.md)
-5. **Phase 3**: Continuous Delivery - See [CONTINUOUS_DELIVERY.md](CONTINUOUS_DELIVERY.md)
+1. **Phase 1**: Security (cargo-deny, cargo-audit, cargo-geiger, cargo-auditable) - See [SECURITY.md](SECURITY.md)
+2. **Phase 2**: Test Runner (cargo-nextest) + Testing Utilities (pretty_assertions) - See [TEST_RUNNER.md](TEST_RUNNER.md)
+3. **Phase 3**: Error Handling (anyhow) - See [ERROR_HANDLING.md](ERROR_HANDLING.md)
+4. **Phase 4**: Coverage (cargo-llvm-cov - SELECTED) - See [CODE_COVERAGE.md](CODE_COVERAGE.md)
+5. **Phase 5**: Pre-commit Hooks - See [PRE_COMMIT.md](PRE_COMMIT.md)
+6. **Phase 6**: GitHub Configuration - See [GITHUB.md](GITHUB.md)
+7. **Phase 7**: Continuous Delivery - See [CONTINUOUS_DELIVERY.md](CONTINUOUS_DELIVERY.md)
 
 
 For detailed implementation steps, see [IMPLEMENTATION.md](IMPLEMENTATION.md).

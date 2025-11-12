@@ -2,37 +2,7 @@
 
 ## Implementation Phases
 
-### Phase 1: Test Runner (cargo-nextest) + Testing Utilities
-1. Add `pretty_assertions` to `Cargo.toml` dev-dependencies
-2. Update tests to use `pretty_assertions::assert_eq!`
-3. Install cargo-nextest locally (Apple Silicon)
-4. Update CI workflow to use cargo-nextest
-5. Configure JUnit XML output for CI
-6. Update documentation
-
-See [TEST_RUNNER.md](TEST_RUNNER.md) for details.
-
-### Phase 1.5: Error Handling (anyhow)
-1. Add `anyhow` to `Cargo.toml` dependencies
-2. Migrate error handling from `panic!` to `Result<T, anyhow::Error>`
-3. Add context to error messages using `.context()` and `.with_context()`
-4. Update `main()` to return `Result<()>`
-5. Update tests to handle `Result` types
-6. Verify error messages are user-friendly
-
-See [ERROR_HANDLING.md](ERROR_HANDLING.md) for details.
-
-### Phase 2: Coverage (cargo-llvm-cov - SELECTED)
-1. Install cargo-llvm-cov locally
-2. Add `llvm-tools-preview` component
-3. Generate initial coverage report
-4. Set coverage threshold goals
-5. Integrate into CI workflow
-6. Configure coverage reporting (e.g., Codecov)
-
-See [CODE_COVERAGE.md](CODE_COVERAGE.md) for details.
-
-### Phase 2.5: Security (cargo-deny, cargo-audit, cargo-geiger, cargo-auditable)
+### Phase 1: Security (cargo-deny, cargo-audit, cargo-geiger, cargo-auditable)
 1. Install all security tools: cargo-deny, cargo-audit, cargo-geiger, cargo-auditable
 2. Create deny.toml configuration
 3. Run initial security scans
@@ -43,7 +13,59 @@ See [CODE_COVERAGE.md](CODE_COVERAGE.md) for details.
 
 See [SECURITY.md](SECURITY.md) for details.
 
-### Phase 3: Continuous Delivery (CD)
+### Phase 2: Test Runner (cargo-nextest) + Testing Utilities
+1. Add `pretty_assertions` to `Cargo.toml` dev-dependencies
+2. Update tests to use `pretty_assertions::assert_eq!`
+3. Install cargo-nextest locally (Apple Silicon)
+4. Update CI workflow to use cargo-nextest
+5. Configure JUnit XML output for CI
+6. Update documentation
+
+See [TEST_RUNNER.md](TEST_RUNNER.md) for details.
+
+### Phase 3: Error Handling (anyhow)
+1. Add `anyhow` to `Cargo.toml` dependencies
+2. Migrate error handling from `panic!` to `Result<T, anyhow::Error>`
+3. Add context to error messages using `.context()` and `.with_context()`
+4. Update `main()` to return `Result<()>`
+5. Update tests to handle `Result` types
+6. Verify error messages are user-friendly
+
+See [ERROR_HANDLING.md](ERROR_HANDLING.md) for details.
+
+### Phase 4: Coverage (cargo-llvm-cov - SELECTED)
+1. Install cargo-llvm-cov locally
+2. Add `llvm-tools-preview` component
+3. Generate initial coverage report
+4. Set coverage threshold goals
+5. Integrate into CI workflow
+6. Configure coverage reporting (e.g., Codecov)
+
+See [CODE_COVERAGE.md](CODE_COVERAGE.md) for details.
+
+### Phase 5: Pre-commit Hooks
+1. Install pre-commit framework
+2. Create `.pre-commit-config.yaml` file
+3. Configure Rust formatting and linting hooks
+4. Configure test hooks (using cargo-nextest)
+5. Configure commit message validation (Conventional Commits)
+6. Install hooks with `pre-commit install`
+7. Test hooks locally
+8. Integrate into CI workflow (optional)
+
+See [PRE_COMMIT.md](PRE_COMMIT.md) for details.
+
+### Phase 6: GitHub Configuration
+1. Configure branch protection rules for `main` branch
+2. Set merge strategy to rebase and merge only
+3. Create version labels (version: major, version: minor, version: patch)
+4. Configure required status checks
+5. Set up workflow permissions
+6. Verify repository settings
+
+See [GITHUB.md](GITHUB.md) for details.
+
+### Phase 7: Continuous Delivery (CD)
 1. Create GitHub Actions workflow for CD
 2. Set up multi-platform builds (Linux x86_64/ARM64, macOS Intel/Apple Silicon)
 3. Configure version extraction from Cargo.toml

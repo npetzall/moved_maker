@@ -51,22 +51,103 @@ After installation, initialize pre-commit in the repository:
 pre-commit install
 ```
 
-This installs the git hooks into `.git/hooks/`.
+This installs the git hooks into `.git/hooks/`. With `default_install_hook_types` configured in `.pre-commit-config.yaml`, this command automatically installs both the `pre-commit` and `commit-msg` hook types.
 
 ## Configuration
 
-Create a `.pre-commit-config.yaml` file in the project root. See `PRE_COMMIT_HOOKS.md` for detailed hook options and selection criteria.
+Create a `.pre-commit-config.yaml` file in the project root with the following complete configuration based on selected hooks:
 
-The configuration will include hooks for:
-- Rust formatting (`cargo fmt`)
-- Tests (`cargo nextest`)
-- Commit message validation (Conventional Commits via `git-sumi`)
-- Recommended: Clippy checks (`cargo clippy`)
-- Recommended: General file checks (`pre-commit-hooks`)
-- Recommended: Security hooks (`cargo-deny`, `cargo-audit`, `ripsecrets`)
-- Optional: Compilation check (`cargo check`)
+```yaml
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
 
-See `PRE_COMMIT_HOOKS.md` for the complete list of selected hooks and configuration examples.
+minimum_pre_commit_version: '3.0.0'
+
+fail_fast: true
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: check-case-conflict
+
+  # Rust formatting, linting, and testing
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt
+        entry: bash -c 'cargo fmt --all -- --check'
+        language: system
+        types: [rust]
+        pass_filenames: false
+        always_run: true
+
+      - id: cargo-check
+        name: cargo check
+        entry: bash -c 'cargo check --all-features --all-targets'
+        language: system
+        types: [rust]
+        pass_filenames: false
+        always_run: true
+
+      - id: cargo-clippy
+        name: cargo clippy
+        entry: bash -c 'cargo clippy --all-features --all-targets -- -D warnings'
+        language: system
+        types: [rust]
+        pass_filenames: false
+        always_run: true
+
+      - id: cargo-test
+        name: cargo test (nextest)
+        entry: bash -c 'cargo nextest run --all-features --all-targets'
+        language: system
+        types: [rust]
+        pass_filenames: false
+        always_run: true
+
+      - id: cargo-deny
+        name: cargo deny check
+        entry: bash -c 'cargo deny check'
+        language: system
+        types: [rust]
+        pass_filenames: false
+        always_run: true
+
+      - id: cargo-audit
+        name: cargo audit
+        entry: bash -c 'cargo audit --deny warnings'
+        language: system
+        types: [rust]
+        pass_filenames: false
+        always_run: true
+
+  # Secret scanning
+  - repo: https://github.com/sirwart/ripsecrets
+    rev: v0.1.11
+    hooks:
+      - id: ripsecrets
+
+  # Commit message validation (Conventional Commits)
+  - repo: https://github.com/welpo/git-sumi
+    rev: v0.2.0
+    hooks:
+      - id: git-sumi
+        stages: [commit-msg]
+```
+
+See `PRE_COMMIT_HOOKS.md` for detailed hook information, selection criteria, configuration details, and the `sumi.toml` configuration for commit message validation.
 
 ## Usage
 

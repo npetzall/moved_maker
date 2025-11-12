@@ -59,6 +59,66 @@ Common hooks for file validation and basic checks:
 - **Documentation**: https://sumi.rs/
 - **Note**: Small but active project with good documentation. When used as pre-commit repository, installation is handled automatically by the pre-commit framework.
 
+#### git-sumi Configuration (`sumi.toml`)
+
+Recommended `sumi.toml` configuration for enforcing Conventional Commits:
+
+```toml
+# Enable Conventional Commits specification
+conventional = true
+
+# Enforce imperative mood in commit descriptions
+# Matches Git's own built-in messages (e.g., "Merge" not "Merged")
+imperative = true
+
+# Ensure commit descriptions are lowercase
+description_case = "lower"
+
+# Prohibit ending commit headers with a period
+no_period = true
+
+# Restrict commit header to 72 characters (Git standard)
+max_header_length = 72
+
+# Limit commit types to standard Conventional Commits types
+# Automatically enables the 'conventional' rule
+types_allowed = [
+  "feat",     # New feature
+  "fix",      # Bug fix
+  "docs",     # Documentation changes
+  "style",    # Code style changes (formatting, missing semicolons, etc.)
+  "refactor", # Code refactoring
+  "test",     # Adding or updating tests
+  "chore",    # Maintenance tasks
+  "perf",     # Performance improvements
+  "ci",       # CI/CD changes
+  "build",    # Build system changes
+  "revert",   # Revert previous commit
+]
+
+# Disallow leading/trailing whitespace and consecutive spaces
+whitespace = true
+
+# Suppress progress messages (optional, set to false for verbose output)
+quiet = false
+```
+
+**Configuration Options Explained**:
+- `conventional = true`: Enforces the [Conventional Commits](https://www.conventionalcommits.org/) specification format: `<type>(<scope>): <subject>`
+- `imperative = true`: Requires imperative mood (e.g., "Add feature" not "Added feature") to match Git's conventions
+- `description_case = "lower"`: Ensures commit descriptions start with lowercase (common convention)
+- `no_period = true`: Prevents periods at the end of commit headers (like email subject lines)
+- `max_header_length = 72`: Enforces Git's recommended header length limit
+- `types_allowed`: Restricts commit types to standard Conventional Commits types (automatically enables `conventional`)
+- `whitespace = true`: Prevents whitespace issues that can affect tooling
+
+**Initialization**: Since `git-sumi` is installed and managed by the pre-commit hook, manually create a `sumi.toml` file in the repository root with the configuration above. The pre-commit hook will automatically use this configuration file when validating commit messages.
+
+**References**:
+- [git-sumi Configuration Documentation](https://sumi.rs/docs/configuration)
+- [git-sumi Rules Documentation](https://sumi.rs/docs/rules)
+- [Conventional Commits Specification](https://www.conventionalcommits.org/)
+
 **Note**: For information about alternative commit message validation tools that were considered but not selected, see `PRE_COMMIT_HOOK_CONSIDERATION.md`.
 
 ## Alternative: Local Hooks (cargo-nextest) ✅ Selected
@@ -398,11 +458,15 @@ If tests are slow:
 ### Commit Message Validation Fails (`git-sumi`)
 
 If commit message validation fails:
-- Check the format matches: `<type>(<scope>): <subject>`
-- Ensure type is one of the allowed types (configured in `sumi.toml`)
-- Use imperative mood for the subject
-- Initialize configuration if needed: `git sumi --init` (creates `sumi.toml`)
+- Check the format matches: `<type>(<scope>): <subject>` (e.g., `feat(parser): add support for data blocks`)
+- Ensure type is one of the allowed types (see `sumi.toml` configuration section above)
+- Use imperative mood for the subject (e.g., "add feature" not "added feature")
+- Ensure description starts with lowercase (if `description_case = "lower"` is set)
+- Ensure header doesn't end with a period (if `no_period = true` is set)
+- Ensure header doesn't exceed 72 characters (if `max_header_length = 72` is set)
+- Initialize configuration if needed: `git sumi --init config` (creates `sumi.toml`)
 - Review `sumi.toml` for custom rules and type definitions
+- Test your commit message: `git sumi --display` (shows parsed commit message)
 
 ### Clippy Warnings (`cargo clippy`)
 

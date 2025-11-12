@@ -26,15 +26,20 @@ The pre-commit framework provides a unified interface for managing git hooks acr
 
 ### Install pre-commit
 
+**uv** (preferred - fastest and most reliable):
+```bash
+uv tool install pre-commit
+```
+
+Alternative installation methods:
+
 **macOS (Homebrew)**:
 ```bash
 brew install pre-commit
 ```
 
-**uv** (recommended for speed):
+**uv pip** (alternative if `uv tool` is not available):
 ```bash
-uv tool install pre-commit
-# or
 uv pip install pre-commit
 ```
 
@@ -50,111 +55,18 @@ This installs the git hooks into `.git/hooks/`.
 
 ## Configuration
 
-Create a `.pre-commit-config.yaml` file in the project root:
+Create a `.pre-commit-config.yaml` file in the project root. See `PRE_COMMIT_HOOKS.md` for detailed hook options and selection criteria.
 
-```yaml
-repos:
-  # General file checks
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-toml
-      - id: check-json
-      - id: check-added-large-files
-        args: ['--maxkb=1000']
-      - id: check-merge-conflict
-      - id: check-case-conflict
+The configuration will include hooks for:
+- Rust formatting (`cargo fmt`)
+- Tests (`cargo nextest`)
+- Commit message validation (Conventional Commits via `git-sumi`)
+- Recommended: Clippy checks (`cargo clippy`)
+- Recommended: General file checks (`pre-commit-hooks`)
+- Recommended: Security hooks (`cargo-deny`, `cargo-audit`, `ripsecrets`)
+- Optional: Compilation check (`cargo check`)
 
-  # Rust formatting
-  - repo: https://github.com/doublify/pre-commit-rust
-    rev: v1.0
-    hooks:
-      - id: fmt
-        args: [--all, --]
-      - id: clippy
-        args: [--all-features, --all-targets, --, -D, warnings]
-      - id: test
-        args: [--all-features, --all-targets]
-
-  # Commit message validation (Conventional Commits)
-  - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v3.0.0
-    hooks:
-      - id: conventional-pre-commit
-        stages: [commit-msg]
-        args:
-          - --types
-          - 'feat,fix,docs,style,refactor,perf,test,chore,revert'
-          - --scopes
-          - 'optional'
-```
-
-### Alternative: Using cargo-nextest for tests
-
-If using `cargo-nextest` (recommended for this project), modify the test hook:
-
-```yaml
-  # Rust formatting and testing with cargo-nextest
-  - repo: local
-    hooks:
-      - id: cargo-fmt
-        name: cargo fmt
-        entry: bash -c 'cargo fmt --all -- --check'
-        language: system
-        types: [rust]
-        pass_filenames: false
-        always_run: true
-
-      - id: cargo-test
-        name: cargo test (nextest)
-        entry: bash -c 'cargo nextest run --all-features --all-targets'
-        language: system
-        types: [rust]
-        pass_filenames: false
-        always_run: true
-
-      - id: cargo-clippy
-        name: cargo clippy
-        entry: bash -c 'cargo clippy --all-features --all-targets -- -D warnings'
-        language: system
-        types: [rust]
-        pass_filenames: false
-        always_run: true
-```
-
-## Hook Details
-
-### Formatting Hook (`cargo fmt`)
-
-- **Purpose**: Ensures all Rust code follows standard formatting
-- **Command**: `cargo fmt --all -- --check`
-- **Behavior**: Fails if code is not formatted correctly
-- **Fix**: Run `cargo fmt --all` to auto-format
-
-### Test Hook (`cargo test` / `cargo nextest`)
-
-- **Purpose**: Runs all tests before allowing commit
-- **Command**: `cargo nextest run --all-features --all-targets` (or `cargo test`)
-- **Behavior**: Fails if any test fails
-- **Note**: Can be slow for large test suites; consider using `--fail-fast` or running specific tests
-
-### Commit Message Hook (Conventional Commits)
-
-- **Purpose**: Validates commit messages follow Conventional Commits format
-- **Format**: `<type>(<scope>): <subject>`
-- **Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `revert`
-- **Example**: `feat(parser): add support for data blocks`
-- **Behavior**: Fails if commit message doesn't match format
-
-### Clippy Hook (Optional but Recommended)
-
-- **Purpose**: Catches common Rust mistakes and enforces best practices
-- **Command**: `cargo clippy --all-features --all-targets -- -D warnings`
-- **Behavior**: Fails on clippy warnings
-- **Note**: Can be strict; may need to allow specific lints
+See `PRE_COMMIT_HOOKS.md` for the complete list of selected hooks and configuration examples.
 
 ## Usage
 
@@ -186,12 +98,48 @@ git commit --no-verify
 
 ### Updating Hooks
 
-Update hook versions:
+#### Standard Update Method
+
+Update hook versions to their latest releases:
 ```bash
 pre-commit autoupdate
 ```
 
-This updates all hook versions to their latest releases.
+This updates all hook versions in `.pre-commit-config.yaml` to their latest releases. Always review changes before committing:
+```bash
+# 1. Update hooks
+pre-commit autoupdate
+
+# 2. Review changes
+git diff .pre-commit-config.yaml
+
+# 3. Test updated hooks
+pre-commit run --all-files
+
+# 4. Commit updates
+git add .pre-commit-config.yaml
+git commit -m "chore: update pre-commit hooks"
+```
+
+#### Advanced Update Tool (Optional)
+
+For more control over updates, you can use `pre-commit-update` which provides additional features:
+- Update by hash instead of tags
+- Define custom tag prefixes
+- Exclude specific repositories from updates
+- Can be configured as a pre-commit hook itself
+
+**Installation** (using uv):
+```bash
+uv tool install pre-commit-update
+```
+
+**Usage**:
+```bash
+pre-commit-update
+```
+
+**Note**: `pre-commit autoupdate` is the standard and recommended method. Use `pre-commit-update` only if you need its advanced features.
 
 ## Integration with CI/CD
 
@@ -225,6 +173,103 @@ jobs:
 ```
 
 This ensures that even if someone bypasses local hooks, CI will catch issues.
+
+## Security and Maintenance
+
+### Checking for Vulnerabilities
+
+Pre-commit hooks should be regularly checked for vulnerabilities and kept up-to-date:
+
+#### 1. Regular Hook Updates
+
+Keep hooks updated to receive security patches:
+```bash
+# Update all hooks to latest versions
+pre-commit autoupdate
+
+# Review changes
+git diff .pre-commit-config.yaml
+
+# Test updated hooks
+pre-commit run --all-files
+```
+
+#### 2. Vulnerability Scanning
+
+Scan pre-commit dependencies for known vulnerabilities:
+
+**Using Snyk** (if available):
+```bash
+# Scan Python dependencies (if pre-commit is installed via pip)
+snyk test --file=requirements.txt
+```
+
+**Using GitHub Dependabot**:
+- Enable Dependabot alerts in your repository settings
+- Configure it to monitor Python dependencies if pre-commit is installed via pip
+
+**Using Security Advisories**:
+- Monitor security advisories for hook repositories:
+  - `pre-commit/pre-commit-hooks`
+  - `welpo/git-sumi`
+  - `sirwart/ripsecrets`
+  - Any other hook repositories you use
+
+#### 3. Verify Hook Integrity
+
+Pre-commit uses pinned revisions (tags/commits) for security. Always pin specific versions in your configuration:
+```yaml
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.5.0  # ✅ Pinned version (secure)
+  hooks:
+    ...
+```
+
+**Avoid**:
+```yaml
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: main  # ❌ Branch reference (less secure)
+```
+
+#### 4. Check Installed Hook Versions
+
+Verify what versions are currently installed:
+```bash
+# See what versions are running
+pre-commit run --all-files --verbose
+
+# Check the cache location
+ls -la ~/.cache/pre-commit/
+```
+
+### Best Practices for Security
+
+1. **Regular Updates**: Run `pre-commit autoupdate` periodically (weekly/monthly)
+2. **Review Changes**: Always review what changed after autoupdate
+3. **Pin Versions**: Use specific tags (e.g., `v4.5.0`) rather than branches
+4. **CI/CD Integration**: Add a check in CI to verify hooks are up-to-date
+5. **Security Scanning**: Include pre-commit dependencies in your security scanning pipeline
+6. **Monitor Advisories**: Subscribe to security advisories for hook repositories
+
+### Recommended Update Workflow
+
+```bash
+# 1. Check current status
+pre-commit run --all-files
+
+# 2. Update hooks
+pre-commit autoupdate
+
+# 3. Review the changes
+git diff .pre-commit-config.yaml
+
+# 4. Test updated hooks
+pre-commit run --all-files
+
+# 5. Commit the updates
+git add .pre-commit-config.yaml
+git commit -m "chore: update pre-commit hooks"
+```
 
 ## Conventional Commits Format
 
@@ -280,9 +325,10 @@ chore: update dependencies
 ### Hooks Running Too Slowly
 
 If hooks are slow:
-1. Use `cargo nextest` instead of `cargo test` (faster test runner)
+1. `cargo nextest` is already configured (faster than `cargo test`)
 2. Consider running tests only on changed files (more complex setup)
-3. Use `--fail-fast` to stop on first failure
+3. Use `--fail-fast` to stop on first failure: `cargo nextest run --fail-fast`
+4. Consider running tests only in CI, not in pre-commit (trade-off)
 
 ### Formatting Hook Fails
 
@@ -300,8 +346,10 @@ git commit -m "style: format code"
 
 If commit message validation fails:
 - Check the format matches: `<type>(<scope>): <subject>`
-- Ensure type is one of the allowed types
+- Ensure type is one of the allowed types (configured in `sumi.toml`)
 - Use imperative mood for the subject
+- Initialize configuration if needed: `git sumi --init` (creates `sumi.toml`)
+- Review `sumi.toml` for custom rules and type definitions
 
 ### Clippy Warnings
 
@@ -312,6 +360,8 @@ If clippy fails:
 [lints.clippy]
 # Allow specific lints if needed
 ```
+
+See `PRE_COMMIT_HOOKS.md` for more detailed troubleshooting information for specific hooks.
 
 ### Pre-commit Not Running
 
@@ -328,10 +378,13 @@ ls -la .git/hooks/
 ## Best Practices
 
 1. **Run hooks before pushing**: Always run `pre-commit run --all-files` before pushing
-2. **Keep hooks updated**: Regularly run `pre-commit autoupdate`
-3. **Don't bypass hooks**: Avoid `--no-verify` unless absolutely necessary
-4. **Fix issues immediately**: Don't accumulate formatting or test failures
-5. **Document exceptions**: If a hook needs to be disabled, document why
+2. **Keep hooks updated**: Regularly run `pre-commit autoupdate` (weekly/monthly)
+3. **Review updates**: Always review changes after `pre-commit autoupdate` before committing
+4. **Check for vulnerabilities**: Regularly scan for vulnerabilities in hook dependencies
+5. **Pin versions**: Use specific tags (e.g., `v4.5.0`) rather than branches in configuration
+6. **Don't bypass hooks**: Avoid `--no-verify` unless absolutely necessary
+7. **Fix issues immediately**: Don't accumulate formatting or test failures
+8. **Document exceptions**: If a hook needs to be disabled, document why
 
 ## Implementation Steps
 
@@ -339,20 +392,25 @@ ls -la .git/hooks/
 2. Create `.pre-commit-config.yaml` in project root
 3. Configure hooks for:
    - Rust formatting (`cargo fmt`)
-   - Tests (`cargo nextest` or `cargo test`)
-   - Commit message validation (Conventional Commits)
-   - Optional: Clippy checks
+   - Tests (`cargo nextest`)
+   - Commit message validation (Conventional Commits via `git-sumi`)
+   - Recommended: Clippy checks (`cargo clippy`)
+   - Recommended: General file checks (`pre-commit-hooks`)
+   - Recommended: Security hooks (`cargo-deny`, `cargo-audit`, `ripsecrets`)
+   
+   See `PRE_COMMIT_HOOKS.md` for complete configuration examples.
 4. Install hooks: `pre-commit install`
 5. Test hooks: `pre-commit run --all-files`
 6. Add CI workflow to enforce hooks in CI
 7. Document in project README
 
+## Related Documents
+
+- `PRE_COMMIT_HOOKS.md` - Detailed hook information for investigation and selection
+
 ## References
 
 - [pre-commit Documentation](https://pre-commit.com/)
 - [Conventional Commits Specification](https://www.conventionalcommits.org/)
-- [pre-commit-hooks](https://github.com/pre-commit/pre-commit-hooks)
-- [pre-commit-rust](https://github.com/doublify/pre-commit-rust)
-- [conventional-pre-commit](https://github.com/compilerla/conventional-pre-commit)
-- [cargo-nextest Documentation](https://nexte.st/)
+- See `PRE_COMMIT_HOOKS.md` for hook-specific references
 

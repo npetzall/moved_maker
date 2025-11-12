@@ -10,16 +10,17 @@ Comparison of code coverage tools for Rust projects, focusing on compatibility w
 **Overview**: Uses LLVM's source-based code coverage (same technology as Rust compiler)
 
 **Compatibility**:
-- ✅ Apple Silicon (ARM): Fully supported, available via Homebrew
+- ✅ All platforms: Available via `cargo install`
+- ✅ Apple Silicon (ARM): Fully supported
 - ✅ Linux (GitHub Actions): Fully supported
 
 **Installation**:
 ```bash
-# Apple Silicon
-brew install cargo-llvm-cov
-
-# Linux / GitHub Actions
+# Install cargo-llvm-cov (all platforms)
 cargo install cargo-llvm-cov
+
+# Install required Rust component
+rustup component add llvm-tools-preview
 ```
 
 **Usage**:

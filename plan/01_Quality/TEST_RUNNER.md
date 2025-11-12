@@ -12,20 +12,22 @@ Fast, modern test runner for Rust projects
 - Test partitioning and sharding for CI
 
 ## Compatibility
-- ✅ Apple Silicon (ARM): Pre-built binaries available via Homebrew
+- ✅ All platforms: Available via `cargo install`
+- ✅ Apple Silicon (ARM): Fully supported
 - ✅ Linux (GitHub Actions): Pre-built binaries available for x86_64 and aarch64
 
 ## Installation
 
-### Apple Silicon (macOS)
-```bash
-brew install cargo-nextest
-```
-
-### Linux / GitHub Actions
+### Preferred Method (All Platforms)
 ```bash
 cargo install cargo-nextest
-# Or use: taiki-e/install-action GitHub Action
+```
+
+### Alternative: GitHub Actions
+For CI/CD workflows, you can use the GitHub Action:
+```yaml
+- name: Install cargo-nextest
+  uses: taiki-e/install-action@cargo-nextest
 ```
 
 ## Usage

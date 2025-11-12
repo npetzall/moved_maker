@@ -6,7 +6,6 @@ This guide consolidates all setup instructions for quality tooling in the move_m
 ## Prerequisites
 
 - Rust toolchain installed (stable)
-- Homebrew (for macOS/Apple Silicon)
 - Git repository access
 
 ## Quick Setup
@@ -17,16 +16,11 @@ This guide consolidates all setup instructions for quality tooling in the move_m
 rustup component add llvm-tools-preview
 ```
 
-### 2. Install Homebrew Packages (Apple Silicon/macOS)
+### 2. Install Cargo Tools
 
 ```bash
-brew install cargo-nextest cargo-llvm-cov llvm
-```
-
-### 3. Install Cargo Tools
-
-```bash
-cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
+# Install all quality tools via cargo
+cargo install cargo-nextest cargo-llvm-cov cargo-deny cargo-audit cargo-geiger cargo-auditable
 ```
 
 ### 4. Initialize Security Configuration
@@ -59,8 +53,8 @@ anyhow = "1.0"  # ✅ Selected
 
 | Tool | Installation Method | Purpose |
 |------|-------------------|---------|
-| **cargo-nextest** | `brew install` (macOS) or `cargo install` | Fast test runner |
-| **cargo-llvm-cov** | `brew install` (macOS) or `cargo install` | Code coverage |
+| **cargo-nextest** | `cargo install` | Fast test runner |
+| **cargo-llvm-cov** | `cargo install` | Code coverage |
 | **llvm-tools-preview** | `rustup component add` | Required for coverage |
 | **cargo-deny** | `cargo install` | Security scanning (blocking) |
 | **cargo-audit** | `cargo install` | Vulnerability scanning (blocking) |
@@ -160,9 +154,10 @@ See [IMPLEMENTATION.md](IMPLEMENTATION.md) for detailed phase instructions.
 ### Apple Silicon Issues
 
 If you encounter issues on Apple Silicon:
-- Ensure Homebrew packages are installed: `brew install cargo-nextest cargo-llvm-cov llvm`
+- Ensure all tools are installed: `cargo install cargo-nextest cargo-llvm-cov`
 - Verify Rust toolchain: `rustup show`
 - Check LLVM tools: `rustup component list | grep llvm`
+- Ensure `llvm-tools-preview` is installed: `rustup component add llvm-tools-preview`
 
 ### Coverage Not Working
 

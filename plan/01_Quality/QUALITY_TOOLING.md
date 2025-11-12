@@ -36,17 +36,18 @@ pretty_assertions = "1.4"  # ✅ Selected - Will be added in Phase 2
 tempfile = "3.10"  # Already present
 ```
 
-### Local Development Setup (Apple Silicon)
+### Local Development Setup
 
 ```bash
-# Install Homebrew packages
-brew install pre-commit cargo-nextest cargo-llvm-cov llvm
-
 # Install Rust components
 rustup component add llvm-tools-preview
 
-# Install cargo tools
-cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
+# Install cargo tools (all platforms)
+cargo install cargo-nextest cargo-llvm-cov cargo-deny cargo-audit cargo-geiger cargo-auditable
+
+# Install pre-commit (preferred: uv tool install pre-commit)
+# See PRE_COMMIT.md for installation options
+uv tool install pre-commit
 
 # Install pre-commit hooks
 pre-commit install

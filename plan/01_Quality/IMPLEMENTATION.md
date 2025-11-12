@@ -178,41 +178,13 @@ jobs:
 
 ## Local Development Setup
 
-### Apple Silicon (macOS)
-
-```bash
-# Install Homebrew packages
-brew install cargo-nextest cargo-llvm-cov llvm
-
-# Install Rust components
-rustup component add llvm-tools-preview
-
-# Install cargo tools
-cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
-
-# Add dependencies (if not already in Cargo.toml)
-# cargo add anyhow
-# cargo add --dev pretty_assertions
-
-# Run tests
-cargo nextest run
-
-# Generate coverage
-cargo llvm-cov nextest --all-features --html
-
-# Run security checks
-cargo deny check
-cargo audit
-cargo geiger
-```
-
-### Linux
+### All Platforms
 
 ```bash
 # Install Rust components
 rustup component add llvm-tools-preview
 
-# Install cargo tools
+# Install cargo tools (all platforms)
 cargo install cargo-nextest cargo-llvm-cov cargo-deny cargo-audit cargo-geiger cargo-auditable
 
 # Add dependencies (if not already in Cargo.toml)

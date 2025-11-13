@@ -435,4 +435,3 @@ This document archives all completed items from the TDD implementation checklist
   - [x] Review and refactor if needed
   - [x] Check module line counts - split if > 500 lines (all modules under 500 lines)
   - [x] Verify all unit tests are in nested `#[cfg(test)]` modules
-

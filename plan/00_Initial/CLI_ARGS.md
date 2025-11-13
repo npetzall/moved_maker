@@ -52,24 +52,24 @@ struct Args {
 ```rust
 fn validate_args(args: &Args) -> Result<(), String> {
     let src_path = Path::new(&args.src);
-    
+
     if !src_path.exists() {
         return Err(format!("Source directory '{}' does not exist", args.src));
     }
-    
+
     if !src_path.is_dir() {
         return Err(format!("'{}' is not a directory", args.src));
     }
-    
+
     if args.module_name.is_empty() {
         panic!("Module name cannot be empty");
     }
-    
+
     // Validate Terraform identifier format
     if !is_valid_terraform_identifier(&args.module_name) {
         panic!("Module name '{}' is not a valid Terraform identifier. Must start with letter/underscore and contain only alphanumeric, underscore, or hyphen", args.module_name);
     }
-    
+
     Ok(())
 }
 
@@ -77,12 +77,12 @@ fn is_valid_terraform_identifier(name: &str) -> bool {
     if name.is_empty() {
         return false;
     }
-    
+
     let first_char = name.chars().next().unwrap();
     if !first_char.is_alphabetic() && first_char != '_' {
         return false;
     }
-    
+
     name.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-')
 }
 ```
@@ -91,4 +91,3 @@ fn is_valid_terraform_identifier(name: &str) -> bool {
 - Clear, actionable error messages
 - Exit code 1 on validation failure
 - Print to stderr
-

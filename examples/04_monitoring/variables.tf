@@ -31,4 +31,3 @@ variable "lambda_alert_handler" {
   type        = string
   default     = null
 }
-

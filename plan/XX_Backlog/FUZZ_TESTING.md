@@ -86,29 +86,29 @@ jobs:
   fuzz:
     runs-on: ubuntu-latest
     timeout-minutes: 60  # Limit total job time
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      
+
       - name: Install LLVM (for libFuzzer)
         run: |
           sudo apt-get update
           sudo apt-get install -y llvm-dev libclang-dev clang
-      
+
       - name: Install cargo-fuzz
         run: cargo install cargo-fuzz
-      
+
       - name: Initialize fuzz directory (if needed)
         run: |
           if [ ! -d "fuzz" ]; then
             cargo fuzz init
           fi
         continue-on-error: true
-      
+
       - name: Run fuzz targets with time limits
         run: |
           # Run each fuzz target for 5 minutes
@@ -116,7 +116,7 @@ jobs:
             echo "Running fuzz target: $target"
             timeout 300 cargo fuzz run $target -- -max_total_time=300 || true
           done
-      
+
       - name: Upload fuzz artifacts
         uses: actions/upload-artifact@v4
         if: always()
@@ -144,22 +144,22 @@ jobs:
   fuzz-quick:
     runs-on: ubuntu-latest
     timeout-minutes: 10  # Very short timeout for PRs
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      
+
       - name: Install LLVM
         run: |
           sudo apt-get update
           sudo apt-get install -y llvm-dev libclang-dev clang
-      
+
       - name: Install cargo-fuzz
         run: cargo install cargo-fuzz
-      
+
       - name: Quick fuzz run (1 minute per target)
         run: |
           for target in $(cargo fuzz list); do
@@ -189,4 +189,3 @@ If fuzz testing finds issues, they should be addressed before the next release, 
 ## References
 - [cargo-fuzz Documentation](https://github.com/rust-fuzz/cargo-fuzz)
 - [libFuzzer Documentation](https://llvm.org/docs/LibFuzzer.html)
-

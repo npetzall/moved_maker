@@ -93,22 +93,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      
+
       - name: Install security tools
         run: cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
-      
+
       - name: Run cargo-deny checks (blocking)
         run: cargo deny check
-      
+
       - name: Update vulnerability database
         run: cargo audit update
-      
+
       - name: Run cargo-audit checks (blocking)
         run: cargo audit --deny warnings
-      
+
       - name: Run cargo-geiger scan (blocking)
         run: cargo geiger --output-format json > geiger-report.json
 
@@ -126,21 +126,21 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Needed for version calculation
-    
+
       - name: Setup GitHub CLI
         uses: cli/cli-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Calculate version from PR labels (Option E)
         id: version
         run: |
           # Fetch all tags (required for shallow clones)
           git fetch --tags --force
-          
+
           # Get latest tag matching v* pattern
           LATEST_TAG=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "")
-          
+
           if [ -z "$LATEST_TAG" ]; then
             # No tag found, use base version from Cargo.toml
             BASE_VERSION=$(grep '^version = ' Cargo.toml | cut -d '"' -f 2)
@@ -149,21 +149,21 @@ jobs:
           else
             # Extract version from tag (remove 'v' prefix)
             BASE_VERSION="${LATEST_TAG#v}"
-            
+
             # Parse version components
             IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
-            
+
             # Get merged PRs since last tag
             TAG_DATE=$(git log -1 --format=%ct ${LATEST_TAG})
             PRS=$(gh pr list --state merged --base main --json number,labels,mergedAt --limit 100)
-            
+
             MAJOR_BUMP=false
             MINOR_BUMP=false
-            
+
             # Check labels on merged PRs (labels are source of truth, already auto-applied)
             for PR_NUM in $(echo "$PRS" | jq -r '.[] | select(.mergedAt != null) | select((.mergedAt | fromdateiso8601) > '$TAG_DATE') | .number'); do
               LABELS=$(gh pr view $PR_NUM --json labels --jq '.labels[].name' | tr '\n' ' ')
-              
+
               if echo "$LABELS" | grep -qE "(version: major|breaking)"; then
                 MAJOR_BUMP=true
                 echo "PR #$PR_NUM has major version label"
@@ -173,7 +173,7 @@ jobs:
               fi
               # No label = patch bump (handled below)
             done
-            
+
             # Calculate version based on highest bump type found
             if [ "$MAJOR_BUMP" = true ]; then
               MAJOR=$((MAJOR + 1))
@@ -190,17 +190,17 @@ jobs:
               PATCH=$((PATCH + COMMIT_COUNT))
               BUMP_TYPE="PATCH"
             fi
-            
+
             VERSION="${MAJOR}.${MINOR}.${PATCH}"
-            
+
             echo "Latest tag: $LATEST_TAG"
             echo "Bump type: $BUMP_TYPE"
             echo "Calculated version: $VERSION"
           fi
-          
+
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag_name=v$VERSION" >> $GITHUB_OUTPUT
-      
+
       - name: Update Cargo.toml version
         run: |
           sed -i "s/^version = \".*\"/version = \"${{ steps.version.outputs.version }}\"/" Cargo.toml
@@ -224,62 +224,62 @@ jobs:
           - os: macos-latest
             target: aarch64-apple-darwin
             artifact_name: move_maker-macos-aarch64
-    
+
     permissions:
       contents: write
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Needed for release notes
-      
+
       - name: Update Cargo.toml with calculated version
         run: |
           sed -i "s/^version = \".*\"/version = \"${{ needs.version.outputs.version }}\"/" Cargo.toml
           echo "Updated Cargo.toml version to ${{ needs.version.outputs.version }}"
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-      
+
       - name: Install cargo-nextest
         uses: taiki-e/install-action@cargo-nextest
-      
+
       - name: Install cargo-auditable
         run: cargo install cargo-auditable
-      
+
       - name: Run tests
         run: cargo nextest run
-      
+
       - name: Build release binary with embedded dependency info
         run: cargo auditable build --release --target ${{ matrix.target }}
-      
+
       - name: Install cargo-audit for binary auditing
         run: cargo install cargo-audit
-      
+
       - name: Audit release binary
         run: cargo audit bin target/${{ matrix.target }}/release/move_maker
-      
+
       - name: Strip binary (Linux/macOS)
         if: matrix.os != 'windows'
         run: strip target/${{ matrix.target }}/release/move_maker
-      
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: target/${{ matrix.target }}/release/move_maker
           retention-days: 1
-      
+
       - name: Create checksum
         shell: bash
         run: |
           cd target/${{ matrix.target }}/release
           shasum -a 256 move_maker > move_maker.sha256
           cat move_maker.sha256
-      
+
       - name: Upload checksum
         uses: actions/upload-artifact@v4
         with:
@@ -292,13 +292,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Generate release notes
         id: release_notes
         run: |
@@ -309,11 +309,11 @@ jobs:
           else
             NOTES=$(git log --pretty=format:"- %s (%h)" --no-merges -10)
           fi
-          
+
           if [ -z "$NOTES" ]; then
             NOTES="- No significant changes"
           fi
-          
+
           {
             echo "## Changes"
             echo ""
@@ -327,21 +327,21 @@ jobs:
             echo "- macOS (Intel): \`move_maker-macos-x86_64\`"
             echo "- macOS (Apple Silicon): \`move_maker-macos-aarch64\`"
           } > release_notes.md
-          
+
           echo "notes<<EOF" >> $GITHUB_OUTPUT
           cat release_notes.md >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-      
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-      
+
       - name: Update Cargo.toml with calculated version
         run: |
           sed -i "s/^version = \".*\"/version = \"${{ needs.version.outputs.version }}\"/" Cargo.toml
           echo "Updated Cargo.toml version to ${{ needs.version.outputs.version }}"
-      
+
       - name: Commit and push version update
         run: |
           git config user.name "github-actions[bot]"
@@ -349,12 +349,12 @@ jobs:
           git add Cargo.toml
           git commit -m "chore: bump version to ${{ needs.version.outputs.version }}" || true
           git push origin HEAD:main || true
-      
+
       - name: Create git tag
         run: |
           git tag -a "${{ needs.version.outputs.tag_name }}" -m "Release ${{ needs.version.outputs.tag_name }}"
           git push origin "${{ needs.version.outputs.tag_name }}"
-      
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -537,4 +537,3 @@ All workflows run all security tools (cargo-deny, cargo-audit, cargo-geiger, car
 - [ncipollo/release-action](https://github.com/ncipollo/create-release)
 - [cargo-release Documentation](https://github.com/crate-ci/cargo-release)
 - [GitHub Actions: Creating Releases](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#release)
-

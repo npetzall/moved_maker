@@ -179,7 +179,7 @@ fn test_single_resource() {
         .args(&["--src", "tests/fixtures", "--module-name", "compute"])
         .output()
         .expect("Failed to execute command");
-    
+
     let stdout = String::from_utf8(output.stdout).unwrap();
     // Verify output matches expected format
 }
@@ -215,7 +215,7 @@ mod tests {
             "compute",
             path
         );
-        
+
         // Verify block structure
         assert_eq!(block.ident.value().to_string(), "moved");
         // Verify attributes
@@ -258,4 +258,3 @@ cargo test --test integration_test
 - Verify output can be pasted into Terraform files
 - Test with `terraform plan` to ensure moved blocks are valid
 - Test with different module names
-

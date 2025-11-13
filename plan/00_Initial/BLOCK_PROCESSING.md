@@ -36,12 +36,12 @@ fn extract_resource_info(block: &Block) -> Option<(String, String)> {
     if ident != "resource" {
         return None;
     }
-    
+
     let labels: Vec<String> = block.labels
         .iter()
         .map(|l| l.value().to_string())
         .collect();
-    
+
     if labels.len() >= 2 {
         Some((labels[0].clone(), labels[1].clone()))
     } else {
@@ -86,12 +86,12 @@ fn build_resource_moved_block(
         .attribute(Attribute::new("from", build_from_expression(resource_type, resource_name)))
         .attribute(Attribute::new("to", build_to_expression(module_name, resource_type, resource_name)))
         .build();
-    
+
     // Add comment as prefix decor
     let filename = path.file_name().expect("path must have filename").to_string_lossy();
     let comment = format!("# From: {}\n", filename);
     block.decor_mut().set_prefix(&comment);
-    
+
     block
 }
 ```
@@ -172,4 +172,3 @@ for block in filtered_blocks {
 ### Count/For Each
 - Resources with `count` or `for_each` are handled the same way
 - The address format remains the same (Terraform handles indexing)
-

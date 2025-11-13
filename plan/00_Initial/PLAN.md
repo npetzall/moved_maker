@@ -77,4 +77,3 @@ See [TESTING.md](TESTING.md) for detailed testing strategy.
 - Edge case testing (invalid files, missing labels, etc.)
 - Test fixtures with sample Terraform files
 - Verify output format and correctness
-

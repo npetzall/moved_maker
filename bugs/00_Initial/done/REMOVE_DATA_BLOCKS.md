@@ -121,4 +121,3 @@ The tool should:
 - This is a breaking change in behavior, but it's correcting incorrect functionality
 - Data blocks will simply be ignored, which is the correct behavior
 - Resource blocks will continue to work as expected
-

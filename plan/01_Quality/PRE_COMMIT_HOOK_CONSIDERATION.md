@@ -146,7 +146,7 @@ Below are alternatives to `conventional-pre-commit`, focusing on Rust and Python
 | **commit-check** | Python | 31 | ✅ Yes | ✅ Yes | ✅ Yes | Comprehensive validation (messages, branches, committer) |
 | **commit-msg-hook** | Python | Unknown | ✅ Yes | ✅ Yes | ✅ Yes | Simple and focused |
 
-**Recommendation Notes**: 
+**Recommendation Notes**:
 - For **Python preference**: `commitizen` is the most popular (~3,000-3,500 stars) and well-maintained option with extensive features
 - `conventional-commits` (0 stars) is a very new, lightweight option focused strictly on Conventional Commits spec. Good for minimal dependencies but very new (created Aug 2024).
 - `conventional-pre-commit` was previously used but has been replaced by `git-sumi` for better Rust ecosystem consistency
@@ -187,4 +187,3 @@ Detects unsafe code usage in project and dependencies:
 
 ### Rust Tools
 - [cargo-geiger](https://github.com/rust-secure-code/cargo-geiger) - Unsafe code detection (⚠️ **Too slow for pre-commit** - run in CI only)
-

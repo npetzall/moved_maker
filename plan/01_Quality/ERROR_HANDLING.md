@@ -45,10 +45,10 @@ use anyhow::{Context, Result};
 fn process_config() -> Result<()> {
     let config = load_config()
         .context("Failed to load configuration")?;
-    
+
     validate_config(&config)
         .context("Configuration validation failed")?;
-    
+
     Ok(())
 }
 ```
@@ -104,7 +104,7 @@ use pretty_assertions::assert_eq;
 fn test_error_handling() {
     let result = parse_invalid_file();
     assert!(result.is_err());
-    
+
     let error_msg = result.unwrap_err().to_string();
     assert!(error_msg.contains("Failed to read file"));
 }
@@ -120,7 +120,7 @@ fn test_error_messages() {
     let result: Result<String> = Err(anyhow::anyhow!("Base error"))
         .context("First context")
         .context("Second context");
-    
+
     let error_str = format!("{:#}", result.unwrap_err());
     assert_eq!(
         error_str,
@@ -140,7 +140,7 @@ fn test_error_messages() {
    ```rust
    // Good
    .context("Failed to parse HCL file")
-   
+
    // Better
    .with_context(|| format!("Failed to parse HCL file: {}", path.display()))
    ```
@@ -208,4 +208,3 @@ fn main() -> Result<()> {
 - [anyhow Documentation](https://docs.rs/anyhow/)
 - [anyhow GitHub Repository](https://github.com/dtolnay/anyhow)
 - [Error Handling in Rust Book](https://doc.rust-lang.org/book/ch09-00-error-handling.html)
-

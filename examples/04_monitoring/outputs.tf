@@ -15,4 +15,3 @@ output "log_group_names" {
     access      = aws_cloudwatch_log_group.access.name
   }
 }
-

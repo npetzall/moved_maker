@@ -42,4 +42,3 @@ variable "deployment_bucket" {
   description = "S3 bucket name for deployment"
   type        = string
 }
-

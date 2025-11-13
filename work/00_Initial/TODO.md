@@ -13,4 +13,3 @@ This checklist contains only the remaining incomplete items. All completed items
   - [ ] Test with real Terraform configuration
   - [ ] Verify output can be pasted into Terraform file
   - [ ] Test with `terraform plan` to verify moved blocks are valid
-

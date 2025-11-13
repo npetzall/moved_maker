@@ -7,4 +7,3 @@ locals {
 
   pipeline_name = "${var.project_name}-pipeline"
 }
-

@@ -74,26 +74,26 @@ jobs:
   mutation:
     runs-on: ubuntu-latest
     timeout-minutes: 120  # Allow up to 2 hours for mutation testing
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      
+
       - name: Install cargo-nextest
         uses: taiki-e/install-action@cargo-nextest
-      
+
       - name: Install cargo-mutants
         run: cargo install cargo-mutants
-      
+
       - name: Run mutation testing
         run: |
           cargo mutants --test-runner cargo-nextest \
             --timeout 300 \
             --output json > mutation-results.json || true
-      
+
       - name: Upload mutation results
         uses: actions/upload-artifact@v4
         if: always()
@@ -101,7 +101,7 @@ jobs:
           name: mutation-results
           path: mutation-results.json
           retention-days: 30
-      
+
       - name: Comment on PR (if applicable)
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v6
@@ -130,20 +130,20 @@ jobs:
   mutation-quick:
     runs-on: ubuntu-latest
     timeout-minutes: 30  # Shorter timeout for PRs
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      
+
       - name: Install cargo-nextest
         uses: taiki-e/install-action@cargo-nextest
-      
+
       - name: Install cargo-mutants
         run: cargo install cargo-mutants
-      
+
       - name: Quick mutation test (changed files only)
         run: |
           # Only test mutations in changed files
@@ -208,4 +208,3 @@ test-runner = "cargo-nextest"
 ## References
 - [cargo-mutants Documentation](https://mutants.rs/)
 - [Mutation Testing Guide](https://mutants.rs/guide/)
-

@@ -143,4 +143,3 @@ resource "aws_cloudwatch_metric_alarm" "error_rate" {
 
   tags = local.common_tags
 }
-

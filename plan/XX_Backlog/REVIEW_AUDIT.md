@@ -144,4 +144,3 @@ Both tools add supply chain trust verification beyond automated vulnerability sc
 
 - [cargo vet Documentation](https://mozilla.github.io/cargo-vet/)
 - [cargo crev Documentation](https://github.com/crev-dev/cargo-crev)
-

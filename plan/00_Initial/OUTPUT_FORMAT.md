@@ -97,12 +97,12 @@ fn build_resource_moved_block(
         .attribute(Attribute::new("from", build_from_expression(resource_type, resource_name, false)))
         .attribute(Attribute::new("to", build_to_expression(module_name, resource_type, resource_name, false)))
         .build();
-    
+
     // Add comment as prefix decor
     let filename = path.file_name().expect("path must have filename").to_string_lossy();
     let comment = format!("# From: {}\n", filename);
     block.decor_mut().set_prefix(&comment);
-    
+
     block
 }
 
@@ -117,12 +117,12 @@ fn build_data_moved_block(
         .attribute(Attribute::new("from", build_from_expression(data_type, data_name, true)))
         .attribute(Attribute::new("to", build_to_expression(module_name, data_type, data_name, true)))
         .build();
-    
+
     // Add comment as prefix decor
     let filename = path.file_name().expect("path must have filename").to_string_lossy();
     let comment = format!("# From: {}\n", filename);
     block.decor_mut().set_prefix(&comment);
-    
+
     block
 }
 
@@ -165,7 +165,7 @@ let body = build_output_body(&moved_blocks);
 println!("{}", body);
 ```
 
-**Note**: 
+**Note**:
 - Blocks are built directly with comments attached via decor
 - No intermediate data structures needed
 - The `Body` type implements `Display`, so it can be directly converted to a string
@@ -182,4 +182,3 @@ println!("{}", body);
 - Each moved block should be valid HCL
 - Can be directly pasted into Terraform configuration
 - Should work with `terraform plan` and `terraform apply`
-

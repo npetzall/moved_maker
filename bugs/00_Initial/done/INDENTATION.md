@@ -111,7 +111,7 @@ But we can't have both with the current approach:
    - **Key discovery**: Attributes can have prefix decorations set via `attr.decor_mut().set_prefix("  ")`
    - When attributes are encoded within a block body, their prefix decorations are written before the attribute
    - This means we can manually set indentation on attributes while preserving block-level comments
-   
+
    **Implementation Approach**:
    - Modify `build_resource_moved_block()` and `build_data_moved_block()` in `src/processor.rs`
    - After creating attributes, set their prefix decorations: `attr.decor_mut().set_prefix("  ")`
@@ -268,4 +268,3 @@ The fix has been successfully implemented using TDD approach:
 - ✅ Phase 4: All verification steps passed
 
 The output now correctly shows indented attributes while preserving comments.
-

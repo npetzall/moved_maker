@@ -389,28 +389,28 @@ Add to `.github/workflows/quality.yml`:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      
+
       - name: Install security tools
         run: cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
-      
+
       - name: Run cargo-deny checks (blocking)
         run: cargo deny check
-      
+
       - name: Update vulnerability database
         run: cargo audit update
-      
+
       - name: Run cargo-audit checks (blocking)
         run: cargo audit --deny warnings
-      
+
       - name: Run cargo-geiger scan (blocking)
         run: cargo geiger --output-format json > geiger-report.json
-      
+
       - name: Build with embedded dependency info
         run: cargo auditable build --release
-      
+
       - name: Audit release binary
         run: cargo audit bin target/release/move_maker
 ```
@@ -426,7 +426,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # ... security checks ...
-  
+
   build-and-release:
     needs: security  # Only build if security checks pass
     # ... build steps ...
@@ -536,4 +536,3 @@ updates:
 - [GitHub Dependabot](https://docs.github.com/en/code-security/dependabot)
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [Rust Security Guidelines](https://rustsec.org/)
-

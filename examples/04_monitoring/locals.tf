@@ -7,4 +7,3 @@ locals {
 
   alert_topic_arn = aws_sns_topic.alerts.arn
 }
-

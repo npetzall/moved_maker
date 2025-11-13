@@ -133,4 +133,3 @@ moved {
      - Collect blocks
 4. Build final `Body` from collected blocks using `build_output_body()`
 5. Print `Body` to stdout using `Display` trait
-

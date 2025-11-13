@@ -3,7 +3,7 @@
 ## Overview
 This document outlines versioning strategy proposals for the move_maker project.
 
-**Selected Approach**: 
+**Selected Approach**:
 - **Option E (PR Labels auto-applied from Conventional Commits)** has been selected for version bump signaling. This approach automatically applies version labels to PRs based on Conventional Commits, with labels serving as the source of truth for version calculation.
 - **Proposal 1 (Git-Based Auto-Versioning via GitHub Actions)** has been selected as the implementation. It natively supports Option E with the simplest implementation.
 
@@ -81,7 +81,7 @@ PR labels are the source of truth, automatically applied by a workflow that anal
    - Uses label as the bump type for that PR
    - Takes the highest bump type found across all merged PRs since last tag
 
-**Pros**: 
+**Pros**:
 - ✅ Fully automated - labels applied automatically from commit messages
 - ✅ Labels are source of truth (can be manually overridden if needed)
 - ✅ Visual and clear - version bump type visible in PR UI
@@ -89,7 +89,7 @@ PR labels are the source of truth, automatically applied by a workflow that anal
 - ✅ No fallback logic needed - labels always present (auto-applied)
 - ✅ Consistent - all PRs get labeled automatically
 
-**Cons**: 
+**Cons**:
 - ⚠️ Only works with PRs (direct commits to main won't have labels)
 - ⚠️ Requires two workflows (label application + version calculation)
 - ⚠️ Requires GitHub API/CLI access in workflows
@@ -124,10 +124,10 @@ jobs:
       - name: Analyze commits and apply label
         run: |
           PR_NUM=${{ github.event.pull_request.number }}
-          
+
           # Get all commit messages in this PR
           COMMITS=$(gh pr view $PR_NUM --json commits --jq '.commits[].message' | tr '\n' '\n')
-          
+
           # Determine version bump type from commits
           VERSION_LABEL=""
           if echo "$COMMITS" | grep -qE "(BREAKING CHANGE|!:)"; then
@@ -135,10 +135,10 @@ jobs:
           elif echo "$COMMITS" | grep -qE "^feat:"; then
             VERSION_LABEL="version: minor"
           fi
-          
+
           # Remove existing version labels
           gh pr edit $PR_NUM --remove-label "version: major" "version: minor" "version: patch" 2>/dev/null || true
-          
+
           # Apply new label if determined
           if [ -n "$VERSION_LABEL" ]; then
             gh pr edit $PR_NUM --add-label "$VERSION_LABEL"
@@ -156,23 +156,23 @@ jobs:
     # Get merged PRs since last tag
     LATEST_TAG=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "")
     TAG_DATE=$(git log -1 --format=%ct ${LATEST_TAG:-HEAD~1000})
-    
+
     PRS=$(gh pr list --state merged --base main --json number,labels,mergedAt --limit 100)
-    
+
     MAJOR_BUMP=false
     MINOR_BUMP=false
-    
+
     # Check labels on merged PRs (labels are source of truth)
     for PR_NUM in $(echo "$PRS" | jq -r '.[] | select(.mergedAt != null) | select((.mergedAt | fromdateiso8601) > '$TAG_DATE') | .number'); do
       LABELS=$(gh pr view $PR_NUM --json labels --jq '.labels[].name' | tr '\n' ' ')
-      
+
       if echo "$LABELS" | grep -qE "(version: major|breaking)"; then
         MAJOR_BUMP=true
       elif echo "$LABELS" | grep -qE "(version: minor|feature)"; then
         MINOR_BUMP=true
       fi
     done
-    
+
     # Calculate version based on highest bump type found
     if [ "$MAJOR_BUMP" = true ]; then
       # MAJOR bump logic
@@ -270,10 +270,10 @@ jobs:
   run: |
     # Fetch all tags (required for shallow clones)
     git fetch --tags --force
-    
+
     # Get latest tag matching v* pattern
     LATEST_TAG=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "")
-    
+
     if [ -z "$LATEST_TAG" ]; then
       # No tag found, use base version from Cargo.toml
       BASE_VERSION=$(grep '^version = ' Cargo.toml | cut -d '"' -f 2)
@@ -282,13 +282,13 @@ jobs:
     else
       # Extract version from tag (remove 'v' prefix)
       BASE_VERSION="${LATEST_TAG#v}"
-      
+
       # Parse version components
       IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
-      
+
       # Analyze commits since tag for version bump type
       COMMITS=$(git log ${LATEST_TAG}..HEAD --pretty=format:"%s")
-      
+
       # Check for breaking changes (MAJOR bump)
       if echo "$COMMITS" | grep -qE "(BREAKING CHANGE|!:)"; then
         MAJOR=$((MAJOR + 1))
@@ -306,14 +306,14 @@ jobs:
         PATCH=$((PATCH + COMMIT_COUNT))
         BUMP_TYPE="PATCH"
       fi
-      
+
       VERSION="${MAJOR}.${MINOR}.${PATCH}"
-      
+
       echo "Latest tag: $LATEST_TAG"
       echo "Bump type: $BUMP_TYPE"
       echo "Calculated version: $VERSION"
     fi
-    
+
     echo "version=$VERSION" >> $GITHUB_OUTPUT
     echo "tag_name=v$VERSION" >> $GITHUB_OUTPUT
 
@@ -321,10 +321,10 @@ jobs:
   run: |
     sed -i "s/^version = \".*\"/version = \"${{ steps.version.outputs.version }}\"/" Cargo.toml
     echo "Updated Cargo.toml version to ${{ steps.version.outputs.version }}"
-    
+
 - name: Build and release
   # ... build steps using ${{ steps.version.outputs.version }} ...
-  
+
 - name: Create git tag
   run: |
     git config user.name "github-actions[bot]"
@@ -355,10 +355,10 @@ jobs:
   run: |
     # Fetch all tags (required for shallow clones)
     git fetch --tags --force
-    
+
     # Get latest tag matching v* pattern
     LATEST_TAG=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "")
-    
+
     if [ -z "$LATEST_TAG" ]; then
       # No tag found, use base version from Cargo.toml
       BASE_VERSION=$(grep '^version = ' Cargo.toml | cut -d '"' -f 2)
@@ -367,21 +367,21 @@ jobs:
     else
       # Extract version from tag (remove 'v' prefix)
       BASE_VERSION="${LATEST_TAG#v}"
-      
+
       # Parse version components
       IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
-      
+
       # Get merged PRs since last tag
       TAG_DATE=$(git log -1 --format=%ct ${LATEST_TAG})
       PRS=$(gh pr list --state merged --base main --json number,labels,mergedAt --limit 100)
-      
+
       MAJOR_BUMP=false
       MINOR_BUMP=false
-      
+
       # Check labels on merged PRs (labels are source of truth, already auto-applied)
       for PR_NUM in $(echo "$PRS" | jq -r '.[] | select(.mergedAt != null) | select((.mergedAt | fromdateiso8601) > '$TAG_DATE') | .number'); do
         LABELS=$(gh pr view $PR_NUM --json labels --jq '.labels[].name' | tr '\n' ' ')
-        
+
         if echo "$LABELS" | grep -qE "(version: major|breaking)"; then
           MAJOR_BUMP=true
           echo "PR #$PR_NUM has major version label"
@@ -391,7 +391,7 @@ jobs:
         fi
         # No label = patch bump (handled below)
       done
-      
+
       # Calculate version based on highest bump type found
       if [ "$MAJOR_BUMP" = true ]; then
         MAJOR=$((MAJOR + 1))
@@ -408,14 +408,14 @@ jobs:
         PATCH=$((PATCH + COMMIT_COUNT))
         BUMP_TYPE="PATCH"
       fi
-      
+
       VERSION="${MAJOR}.${MINOR}.${PATCH}"
-      
+
       echo "Latest tag: $LATEST_TAG"
       echo "Bump type: $BUMP_TYPE"
       echo "Calculated version: $VERSION"
     fi
-    
+
     echo "version=$VERSION" >> $GITHUB_OUTPUT
     echo "tag_name=v$VERSION" >> $GITHUB_OUTPUT
 
@@ -423,10 +423,10 @@ jobs:
   run: |
     sed -i "s/^version = \".*\"/version = \"${{ steps.version.outputs.version }}\"/" Cargo.toml
     echo "Updated Cargo.toml version to ${{ steps.version.outputs.version }}"
-    
+
 - name: Build and release
   # ... build steps using ${{ steps.version.outputs.version }} ...
-  
+
 - name: Create git tag
   run: |
     git config user.name "github-actions[bot]"
@@ -527,10 +527,10 @@ fn main() {
         let mut major = git_info.major;
         let mut minor = git_info.minor;
         let mut patch = git_info.patch;
-        
+
         // Analyze commits since tag for version bump type
         let commits = get_commit_messages_since_tag(&git_info.tag);
-        
+
         // Check for breaking changes (MAJOR bump)
         if commits.iter().any(|msg| msg.contains("BREAKING CHANGE") || msg.matches("!:").count() > 0) {
             major += 1;
@@ -546,7 +546,7 @@ fn main() {
         else {
             patch += git_info.commits_since_tag;
         }
-        
+
         let version = format!("{}.{}.{}", major, minor, patch);
         println!("cargo:rustc-env=CARGO_PKG_VERSION={}", version);
     }
@@ -672,7 +672,7 @@ fn main() {
         .git_describe(true, true, None)
         .emit()
         .unwrap();
-    
+
     // Parse GIT_DESCRIBE and analyze commits for version calculation
     // Implementation would analyze commit messages and calculate version
     // Then set: println!("cargo:rustc-env=CARGO_PKG_VERSION={}", version);
@@ -848,4 +848,3 @@ Consider the following when selecting a versioning strategy:
 5. Document version bump process
 6. Create auto-label workflow for PRs (Option E)
 7. Create version calculation workflow (Proposal 1 with Option E)
-

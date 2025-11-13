@@ -242,13 +242,13 @@ jobs:
         with:
           python-version: '3.11'
       - uses: dtolnay/rust-toolchain@stable
-      
+
       - name: Install pre-commit
         run: pip install pre-commit
-      
+
       - name: Install cargo-nextest
         uses: taiki-e/install-action@cargo-nextest
-      
+
       - name: Run pre-commit
         run: pre-commit run --all-files
 ```
@@ -478,7 +478,7 @@ ls -la .git/hooks/
    - Recommended: Clippy checks (`cargo clippy`)
    - Recommended: General file checks (`pre-commit-hooks`)
    - Recommended: Security hooks (`cargo-deny`, `cargo-audit`, `ripsecrets`)
-   
+
    See `PRE_COMMIT_HOOKS.md` for complete configuration examples.
 4. Install hooks: `pre-commit install`
 5. Test hooks: `pre-commit run --all-files`
@@ -494,4 +494,3 @@ ls -la .git/hooks/
 - [pre-commit Documentation](https://pre-commit.com/)
 - [Conventional Commits Specification](https://www.conventionalcommits.org/)
 - See `PRE_COMMIT_HOOKS.md` for hook-specific references
-

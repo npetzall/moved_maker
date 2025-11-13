@@ -23,4 +23,3 @@ output "webhook_url" {
   value       = aws_codebuild_webhook.main.url
   sensitive   = true
 }
-

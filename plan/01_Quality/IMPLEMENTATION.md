@@ -94,22 +94,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      
+
       - name: Install security tools
         run: cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
-      
+
       - name: Run cargo-deny checks (blocking)
         run: cargo deny check
-      
+
       - name: Update vulnerability database
         run: cargo audit update
-      
+
       - name: Run cargo-audit checks (blocking)
         run: cargo audit --deny warnings
-      
+
       - name: Run cargo-geiger scan (blocking)
         run: cargo geiger --output-format json > geiger-report.json
 
@@ -118,54 +118,54 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           components: llvm-tools-preview
-      
+
       - name: Install cargo-nextest
         uses: taiki-e/install-action@cargo-nextest
-      
+
       - name: Run tests
         run: cargo nextest run --junit-xml test-results.xml
-      
+
       - name: Upload test results
         uses: actions/upload-artifact@v3
         if: always()
         with:
           name: test-results-${{ matrix.os }}
           path: test-results.xml
-  
+
   coverage:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           components: llvm-tools-preview
-      
+
       - name: Install cargo-nextest
         uses: taiki-e/install-action@cargo-nextest
-      
+
       - name: Install cargo-llvm-cov
         run: cargo install cargo-llvm-cov
-      
+
       - name: Generate coverage
         run: cargo llvm-cov nextest --all-features --lcov --output-path lcov.info
-      
+
       - name: Check coverage thresholds
         run: |
           # Extract coverage percentages and check against thresholds
           cargo llvm-cov nextest --all-features --lcov --output-path lcov.info --summary-only
           # Coverage thresholds: Line > 80%, Branch > 70%, Function > 85%
           # CI will fail if thresholds not met
-      
+
       - name: Upload to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -213,4 +213,3 @@ Create the following GitHub Actions workflow files:
 - `.github/workflows/release.yaml` - Release workflow for pushes to main (security, build, release)
 
 See [CONTINUOUS_DELIVERY.md](CONTINUOUS_DELIVERY.md) for the complete release workflow.
-

@@ -491,4 +491,3 @@ If clippy fails:
 - [ripsecrets](https://github.com/sirwart/ripsecrets) - Secret scanning (✅ **SELECTED** - pre-commit repository available)
 
 **Note**: For references to tools that were considered but not selected, see `PRE_COMMIT_HOOK_CONSIDERATION.md`.
-

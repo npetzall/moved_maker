@@ -15,11 +15,11 @@ use std::path::{Path, PathBuf};
 
 fn find_terraform_files(src: &Path) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
     let mut files = Vec::new();
-    
+
     for entry in fs::read_dir(src)? {
         let entry = entry?;
         let path = entry.path();
-        
+
         // Only process files (not directories)
         if path.is_file() {
             // Check if extension is .tf
@@ -28,7 +28,7 @@ fn find_terraform_files(src: &Path) -> Result<Vec<PathBuf>, Box<dyn std::error::
             }
         }
     }
-    
+
     Ok(files)
 }
 ```
@@ -103,4 +103,3 @@ for file_path in terraform_files {
     }
 }
 ```
-

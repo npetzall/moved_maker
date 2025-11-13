@@ -260,4 +260,3 @@ For issues or questions:
 - Review documentation in `plan/01_Quality/`
 - Check tool-specific documentation (links in each document)
 - Review [REVIEW_ISSUES.md](REVIEW_ISSUES.md) for known issues
-

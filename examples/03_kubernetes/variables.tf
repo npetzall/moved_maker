@@ -43,4 +43,3 @@ variable "node_min_size" {
   type        = number
   default     = 1
 }
-

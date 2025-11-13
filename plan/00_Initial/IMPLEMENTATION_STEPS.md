@@ -72,4 +72,3 @@ See [TESTING.md](TESTING.md) for comprehensive testing strategy.
 - Declare modules in `src/main.rs` using `mod` statements
 - Split modules when they exceed 500 lines
 - Unit tests in nested `#[cfg(test)]` modules within each source file
-

@@ -16,6 +16,8 @@ jobs:
         with:
           toolchain: 1.90.0
 
+      - uses: Swatinem/rust-cache@v2
+
       - name: Install security tools
         run: cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
 
@@ -47,6 +49,10 @@ jobs:
           toolchain: 1.90.0
           components: clippy rustfmt
 
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: false
+
       - name: Install cargo-nextest
         run: cargo install cargo-nextest
 
@@ -74,6 +80,10 @@ jobs:
         with:
           toolchain: 1.90.0
           components: llvm-tools-preview
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: false
 
       - name: Install cargo-nextest
         run: cargo install cargo-nextest
@@ -142,6 +152,8 @@ jobs:
         with:
           toolchain: 1.90.0
           components: clippy rustfmt
+
+      - uses: Swatinem/rust-cache@v2
 
       - name: Install pre-commit
         run: pip install pre-commit

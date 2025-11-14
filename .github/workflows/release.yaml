@@ -17,6 +17,8 @@ jobs:
         with:
           toolchain: 1.90.0
 
+      - uses: Swatinem/rust-cache@v2
+
       - name: Install security tools
         run: cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
 
@@ -168,6 +170,11 @@ jobs:
         with:
           toolchain: 1.90.0
           targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-targets: true
+          cache-on-failure: false
 
       - name: Install cargo-nextest
         run: cargo install cargo-nextest

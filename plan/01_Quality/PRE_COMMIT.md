@@ -62,14 +62,14 @@ default_install_hook_types:
   - pre-commit
   - commit-msg
 
-minimum_pre_commit_version: '3.0.0'
+minimum_pre_commit_version: '4.4.0'
 
 fail_fast: true
 
 repos:
   # General file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
@@ -91,7 +91,7 @@ repos:
         language: system
         types: [rust]
         pass_filenames: false
-        always_run: true
+        stages: [pre-commit]
 
       - id: cargo-check
         name: cargo check
@@ -99,7 +99,7 @@ repos:
         language: system
         types: [rust]
         pass_filenames: false
-        always_run: true
+        stages: [pre-commit]
 
       - id: cargo-clippy
         name: cargo clippy
@@ -107,7 +107,7 @@ repos:
         language: system
         types: [rust]
         pass_filenames: false
-        always_run: true
+        stages: [pre-commit]
 
       - id: cargo-test
         name: cargo test (nextest)
@@ -116,6 +116,7 @@ repos:
         types: [rust]
         pass_filenames: false
         always_run: true
+        stages: [pre-commit]
 
       - id: cargo-deny
         name: cargo deny check
@@ -124,6 +125,7 @@ repos:
         types: [rust]
         pass_filenames: false
         always_run: true
+        stages: [pre-commit]
 
       - id: cargo-audit
         name: cargo audit
@@ -132,6 +134,7 @@ repos:
         types: [rust]
         pass_filenames: false
         always_run: true
+        stages: [pre-commit]
 
   # Secret scanning
   - repo: https://github.com/sirwart/ripsecrets
@@ -145,6 +148,7 @@ repos:
     hooks:
       - id: git-sumi
         stages: [commit-msg]
+        pass_filenames: true
 ```
 
 See `PRE_COMMIT_HOOKS.md` for detailed hook information, selection criteria, configuration details, and the `sumi.toml` configuration for commit message validation.

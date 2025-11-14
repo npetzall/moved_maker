@@ -9,13 +9,13 @@ This document contains information about selected pre-commit hooks for this proj
 ### General File Checks ✅ Selected
 
 **Repository**: `https://github.com/pre-commit/pre-commit-hooks`  
-**Version**: `v4.5.0`
+**Version**: `v6.0.0`
 
 Common hooks for file validation and basic checks:
 
 ```yaml
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.5.0
+  rev: v6.0.0
   hooks:
     - id: trailing-whitespace
       args: [--markdown-linebreak-ext=md]
@@ -134,7 +134,7 @@ For more control or when using `cargo-nextest`, use local hooks:
       language: system
       types: [rust]
       pass_filenames: false
-      always_run: true
+      stages: [pre-commit]
 
     - id: cargo-test
       name: cargo test (nextest)
@@ -143,6 +143,7 @@ For more control or when using `cargo-nextest`, use local hooks:
       types: [rust]
       pass_filenames: false
       always_run: true
+      stages: [pre-commit]
 
     - id: cargo-clippy
       name: cargo clippy
@@ -150,7 +151,7 @@ For more control or when using `cargo-nextest`, use local hooks:
       language: system
       types: [rust]
       pass_filenames: false
-      always_run: true
+      stages: [pre-commit]
 ```
 
 ## Additional Rust Hooks
@@ -168,7 +169,7 @@ A fast compilation check that verifies code compiles without producing binaries:
       language: system
       types: [rust]
       pass_filenames: false
-      always_run: true
+      stages: [pre-commit]
 ```
 
 **Benefits**:
@@ -194,6 +195,7 @@ Comprehensive security scanning for licenses, vulnerabilities, and banned depend
       types: [rust]
       pass_filenames: false
       always_run: true
+      stages: [pre-commit]
 ```
 
 **Configuration**: Requires `deny.toml` file (already configured in this project)
@@ -220,6 +222,7 @@ Vulnerability scanning using RustSec Advisory Database:
       types: [rust]
       pass_filenames: false
       always_run: true
+      stages: [pre-commit]
 ```
 
 **Benefits**:
@@ -318,6 +321,14 @@ Scans codebase for secrets and sensitive information:
 ### Minimal Configuration
 
 ```yaml
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+
+minimum_pre_commit_version: '4.4.0'
+
+fail_fast: true
+
 repos:
   - repo: local
     hooks:
@@ -327,7 +338,7 @@ repos:
         language: system
         types: [rust]
         pass_filenames: false
-        always_run: true
+        stages: [pre-commit]
 
       - id: cargo-test
         name: cargo test (nextest)
@@ -336,6 +347,7 @@ repos:
         types: [rust]
         pass_filenames: false
         always_run: true
+        stages: [pre-commit]
 
   # Commit message validation (Conventional Commits)
   - repo: https://github.com/welpo/git-sumi
@@ -343,6 +355,7 @@ repos:
     hooks:
       - id: git-sumi
         stages: [commit-msg]
+        pass_filenames: true
 ```
 
 ### Recommended Configuration
@@ -350,10 +363,18 @@ repos:
 Includes all selected hooks. All hooks are fast enough for pre-commit:
 
 ```yaml
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+
+minimum_pre_commit_version: '4.4.0'
+
+fail_fast: true
+
 repos:
   # General file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
@@ -375,7 +396,7 @@ repos:
         language: system
         types: [rust]
         pass_filenames: false
-        always_run: true
+        stages: [pre-commit]
 
       - id: cargo-check
         name: cargo check
@@ -383,7 +404,7 @@ repos:
         language: system
         types: [rust]
         pass_filenames: false
-        always_run: true
+        stages: [pre-commit]
 
       - id: cargo-clippy
         name: cargo clippy
@@ -391,7 +412,7 @@ repos:
         language: system
         types: [rust]
         pass_filenames: false
-        always_run: true
+        stages: [pre-commit]
 
       - id: cargo-test
         name: cargo test (nextest)
@@ -400,6 +421,7 @@ repos:
         types: [rust]
         pass_filenames: false
         always_run: true
+        stages: [pre-commit]
 
       - id: cargo-deny
         name: cargo deny check
@@ -408,6 +430,7 @@ repos:
         types: [rust]
         pass_filenames: false
         always_run: true
+        stages: [pre-commit]
 
       - id: cargo-audit
         name: cargo audit
@@ -416,6 +439,7 @@ repos:
         types: [rust]
         pass_filenames: false
         always_run: true
+        stages: [pre-commit]
 
   # Secret scanning
   - repo: https://github.com/sirwart/ripsecrets
@@ -429,6 +453,7 @@ repos:
     hooks:
       - id: git-sumi
         stages: [commit-msg]
+        pass_filenames: true
 ```
 
 **Note**: `cargo-geiger` was considered but is too slow (~12s) for pre-commit and should run in CI only - see `PRE_COMMIT_HOOK_CONSIDERATION.md`.

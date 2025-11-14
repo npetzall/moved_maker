@@ -1,0 +1,302 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install security tools
+        run: cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
+
+      - name: Run cargo-deny checks (blocking)
+        run: cargo deny check --config .config/deny.toml
+
+      - name: Update vulnerability database
+        run: cargo audit update
+
+      - name: Run cargo-audit checks (blocking)
+        run: cargo audit --deny warnings
+
+      - name: Run cargo-geiger scan (blocking)
+        run: cargo geiger --output-format json > geiger-report.json
+
+  version:
+    needs: security
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag_name: ${{ steps.version.outputs.tag_name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup GitHub CLI
+        uses: cli/cli-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch all tags
+        run: git fetch --tags --force
+
+      - name: Calculate version from PR labels
+        id: version
+        run: |
+          set -e  # Exit on error - abort workflow if version calculation fails
+
+          # Get latest tag matching v* pattern
+          LATEST_TAG=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "")
+
+          if [ -z "$LATEST_TAG" ]; then
+            # No tag found (first release), use base version from Cargo.toml
+            BASE_VERSION=$(grep '^version = ' Cargo.toml | cut -d '"' -f 2)
+            if [ -z "$BASE_VERSION" ]; then
+              echo "Error: No version found in Cargo.toml and no previous tags exist"
+              exit 1
+            fi
+            VERSION="$BASE_VERSION"
+            echo "No previous tag found (first release), using base version from Cargo.toml: $VERSION"
+          else
+            # Extract version from tag (remove 'v' prefix)
+            BASE_VERSION="${LATEST_TAG#v}"
+
+            # Parse version components
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
+
+            # Get merged PRs since last tag
+            TAG_DATE=$(git log -1 --format=%ct ${LATEST_TAG})
+            PRS=$(gh pr list --state merged --base main --json number,labels,mergedAt --limit 100)
+
+            MAJOR_BUMP=false
+            MINOR_BUMP=false
+
+            # Check labels on merged PRs (labels are source of truth, already auto-applied)
+            for PR_NUM in $(echo "$PRS" | jq -r '.[] | select(.mergedAt != null) | select((.mergedAt | fromdateiso8601) > '$TAG_DATE') | .number'); do
+              LABELS=$(gh pr view $PR_NUM --json labels --jq '.labels[].name' | tr '\n' ' ')
+
+              if echo "$LABELS" | grep -qE "(version: major|breaking)"; then
+                MAJOR_BUMP=true
+                echo "PR #$PR_NUM has major version label"
+              elif echo "$LABELS" | grep -qE "(version: minor|feature)"; then
+                MINOR_BUMP=true
+                echo "PR #$PR_NUM has minor version label"
+              fi
+              # No label = patch bump (handled below)
+            done
+
+            # Calculate version based on highest bump type found
+            if [ "$MAJOR_BUMP" = true ]; then
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              BUMP_TYPE="MAJOR"
+            elif [ "$MINOR_BUMP" = true ]; then
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              BUMP_TYPE="MINOR"
+            else
+              # PATCH bump by commit count
+              COMMIT_COUNT=$(git rev-list --count ${LATEST_TAG}..HEAD)
+              PATCH=$((PATCH + COMMIT_COUNT))
+              BUMP_TYPE="PATCH"
+            fi
+
+            VERSION="${MAJOR}.${MINOR}.${PATCH}"
+
+            echo "Latest tag: $LATEST_TAG"
+            echo "Bump type: $BUMP_TYPE"
+            echo "Calculated version: $VERSION"
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag_name=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update Cargo.toml version
+        run: |
+          sed -i "s/^version = \".*\"/version = \"${{ steps.version.outputs.version }}\"/" Cargo.toml
+          echo "Updated Cargo.toml version to ${{ steps.version.outputs.version }}"
+
+  build-and-release:
+    needs: [security, version]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: move_maker-linux-x86_64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            artifact_name: move_maker-linux-aarch64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: move_maker-macos-x86_64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: move_maker-macos-aarch64
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update Cargo.toml with calculated version
+        run: |
+          sed -i "s/^version = \".*\"/version = \"${{ needs.version.outputs.version }}\"/" Cargo.toml
+          echo "Updated Cargo.toml version to ${{ needs.version.outputs.version }}"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@cargo-nextest
+
+      - name: Run tests
+        run: cargo nextest run
+
+      - name: Install cargo-auditable
+        run: cargo install cargo-auditable
+
+      - name: Build release binary with embedded dependency info
+        run: cargo auditable build --release --target ${{ matrix.target }}
+
+      - name: Install cargo-audit for binary auditing
+        run: cargo install cargo-audit
+
+      - name: Audit release binary
+        run: cargo audit bin target/${{ matrix.target }}/release/move_maker
+
+      - name: Strip binary (Linux/macOS)
+        if: matrix.os != 'windows'
+        run: strip target/${{ matrix.target }}/release/move_maker
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: target/${{ matrix.target }}/release/move_maker
+          retention-days: 1
+
+      - name: Create checksum
+        shell: bash
+        run: |
+          cd target/${{ matrix.target }}/release
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum move_maker > move_maker.sha256
+          else
+            shasum -a 256 move_maker > move_maker.sha256
+          fi
+          cat move_maker.sha256
+
+      - name: Upload checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}.sha256
+          path: target/${{ matrix.target }}/release/move_maker.sha256
+          retention-days: 1
+
+  release:
+    needs: [security, version, build-and-release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          # Get commits since last tag, or complete history if no tags (first release)
+          if git describe --tags --abbrev=0 2>/dev/null; then
+            LAST_TAG=$(git describe --tags --abbrev=0)
+            NOTES=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          else
+            # First release: read complete history
+            NOTES=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          if [ -z "$NOTES" ]; then
+            NOTES="- No significant changes"
+          fi
+
+          {
+            echo "## Changes"
+            echo ""
+            echo "$NOTES"
+            echo ""
+            echo "## Installation"
+            echo ""
+            echo "Download the appropriate binary for your platform:"
+            echo "- Linux (x86_64): \`move_maker-linux-x86_64\`"
+            echo "- Linux (ARM64): \`move_maker-linux-aarch64\`"
+            echo "- macOS (Intel): \`move_maker-macos-x86_64\`"
+            echo "- macOS (Apple Silicon): \`move_maker-macos-aarch64\`"
+          } > release_notes.md
+
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          cat release_notes.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Update Cargo.toml with calculated version
+        run: |
+          sed -i "s/^version = \".*\"/version = \"${{ needs.version.outputs.version }}\"/" Cargo.toml
+          echo "Updated Cargo.toml version to ${{ needs.version.outputs.version }}"
+
+      - name: Commit and push version update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Cargo.toml
+          git commit -m "chore: bump version to ${{ needs.version.outputs.version }}" || true
+          git push origin HEAD:main || true
+
+      - name: Create git tag
+        run: |
+          git tag -a "${{ needs.version.outputs.tag_name }}" -m "Release ${{ needs.version.outputs.tag_name }}"
+          git push origin "${{ needs.version.outputs.tag_name }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.version.outputs.tag_name }}
+          name: Release ${{ needs.version.outputs.tag_name }}
+          body: ${{ steps.release_notes.outputs.notes }}
+          files: |
+            artifacts/move_maker-linux-x86_64
+            artifacts/move_maker-linux-x86_64.sha256
+            artifacts/move_maker-linux-aarch64
+            artifacts/move_maker-linux-aarch64.sha256
+            artifacts/move_maker-macos-x86_64
+            artifacts/move_maker-macos-x86_64.sha256
+            artifacts/move_maker-macos-aarch64
+            artifacts/move_maker-macos-aarch64.sha256
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

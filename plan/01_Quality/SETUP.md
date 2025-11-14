@@ -27,9 +27,11 @@ cargo install cargo-nextest cargo-llvm-cov cargo-deny cargo-audit cargo-geiger c
 
 ```bash
 cargo deny init
+mkdir -p .config
+mv deny.toml .config/deny.toml
 ```
 
-Edit `deny.toml` to configure license and vulnerability policies (see [SECURITY.md](SECURITY.md)).
+Edit `.config/deny.toml` to configure license and vulnerability policies (see [SECURITY.md](SECURITY.md)).
 
 ### 5. Add Dependencies (When Implementing Phases)
 
@@ -104,7 +106,7 @@ cargo nextest run
 cargo llvm-cov nextest --all-features --html
 
 # Verify security tools
-cargo deny check
+cargo deny check --config .config/deny.toml
 cargo audit
 cargo geiger
 cargo auditable build --release
@@ -120,11 +122,11 @@ cargo audit bin target/release/move_maker
 
 ## Configuration Files
 
-### `deny.toml`
+### `.config/deny.toml`
 
-Security policy configuration for cargo-deny. Created with `cargo deny init`.
+Security policy configuration for cargo-deny. Created with `cargo deny init` and moved to `.config/deny.toml`.
 
-**Location**: Project root
+**Location**: `.config/deny.toml`
 
 **Configuration**: See [SECURITY.md](SECURITY.md) for policy examples.
 
@@ -168,7 +170,7 @@ If you encounter issues on Apple Silicon:
 ### Security Tools Failing
 
 - Update vulnerability database: `cargo audit update`
-- Review `deny.toml` configuration
+- Review `.config/deny.toml` configuration
 - Check for known false positives in security tool documentation
 
 ## Documentation
@@ -209,7 +211,7 @@ cargo llvm-cov nextest --all-features --html
 Security checks are run automatically in CI. To run locally:
 
 ```bash
-cargo deny check
+cargo deny check --config .config/deny.toml
 cargo audit
 cargo geiger
 ```

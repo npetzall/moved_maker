@@ -77,40 +77,11 @@ The module name must be a valid Terraform identifier:
 - Ignores blocks with fewer than 2 labels (logs warning and skips)
 - Blocks with 3+ labels use only the first 2 (type and name)
 
-## Testing
+## Documentation
 
-Run all tests:
-```bash
-cargo test
-```
-
-Run only unit tests:
-```bash
-cargo test --lib
-```
-
-Run only integration tests:
-```bash
-cargo test --test integration_test
-```
-
-## Project Structure
-
-```
-src/
-  cli.rs           - CLI argument parsing and validation
-  file_discovery.rs - Finding .tf files in directory
-  parser.rs        - HCL file parsing
-  processor.rs     - Block extraction and moved block generation
-  output.rs        - Output body generation
-  main.rs          - Main orchestration logic
-
-tests/
-  fixtures/        - Sample Terraform files for testing
-  integration_test.rs - End-to-end integration tests
-```
+- **[DEVELOPMENT.md](DEVELOPMENT.md)**: Installation, usage, testing, and development workflows
+- **[TOOLING.md](TOOLING.md)**: Development tools and security tooling configuration
 
 ## License
 
 This project is provided as-is for use in Terraform refactoring workflows.
-

@@ -101,7 +101,7 @@ jobs:
         run: cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
 
       - name: Run cargo-deny checks (blocking)
-        run: cargo deny check
+        run: cargo deny check --config .config/deny.toml
 
       - name: Update vulnerability database
         run: cargo audit update

@@ -4,7 +4,7 @@
 
 ### Phase 1: Security (cargo-deny, cargo-audit, cargo-geiger, cargo-auditable)
 1. Install all security tools: cargo-deny, cargo-audit, cargo-geiger, cargo-auditable
-2. Create deny.toml configuration
+2. Create `.config/deny.toml` configuration
 3. Run initial security scans
 4. Address any vulnerabilities or license issues
 5. Integrate into CI workflows (all tools blocking)
@@ -102,7 +102,7 @@ jobs:
         run: cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
 
       - name: Run cargo-deny checks (blocking)
-        run: cargo deny check
+        run: cargo deny check --config .config/deny.toml
 
       - name: Update vulnerability database
         run: cargo audit update
@@ -198,7 +198,7 @@ cargo nextest run
 cargo llvm-cov nextest --all-features --html
 
 # Run security checks
-cargo deny check
+cargo deny check --config .config/deny.toml
 cargo audit
 cargo geiger
 ```

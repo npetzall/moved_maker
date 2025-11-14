@@ -120,7 +120,7 @@ repos:
 
       - id: cargo-deny
         name: cargo deny check
-        entry: bash -c 'cargo deny check'
+        entry: bash -c 'cargo deny check --config .config/deny.toml'
         language: system
         types: [rust]
         pass_filenames: false
@@ -149,9 +149,10 @@ repos:
       - id: git-sumi
         stages: [commit-msg]
         pass_filenames: true
+        args: [--config, .config/sumi.toml, --file]
 ```
 
-See `PRE_COMMIT_HOOKS.md` for detailed hook information, selection criteria, configuration details, and the `sumi.toml` configuration for commit message validation.
+See `PRE_COMMIT_HOOKS.md` for detailed hook information, selection criteria, configuration details, and the `.config/sumi.toml` configuration for commit message validation.
 
 ## Usage
 
@@ -431,10 +432,10 @@ git commit -m "style: format code"
 
 If commit message validation fails:
 - Check the format matches: `<type>(<scope>): <subject>`
-- Ensure type is one of the allowed types (configured in `sumi.toml`)
+- Ensure type is one of the allowed types (configured in `.config/sumi.toml`)
 - Use imperative mood for the subject
-- Initialize configuration if needed: `git sumi --init` (creates `sumi.toml`)
-- Review `sumi.toml` for custom rules and type definitions
+- Initialize configuration if needed: `git sumi --init config` (creates `.config/sumi.toml`)
+- Review `.config/sumi.toml` for custom rules and type definitions
 
 ### Clippy Warnings
 

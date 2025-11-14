@@ -1,23 +1,21 @@
+use anyhow::{Context, Result};
 use hcl::edit::parser::parse_body;
 use hcl::edit::structure::Body;
 use std::fs;
 use std::path::Path;
 
 /// Parse a Terraform file and return the HCL Body structure
-pub fn parse_terraform_file(path: &Path) -> Result<Body, hcl::edit::parser::Error> {
+pub fn parse_terraform_file(path: &Path) -> Result<Body> {
     let content = fs::read_to_string(path)
-        .map_err(|_e| {
-            // For IO errors, create a parse error by trying to parse invalid content
-            // This is a workaround since Error::new is private
-            hcl::edit::parser::parse_body("invalid {").unwrap_err()
-        })?;
-    
-    parse_body(&content)
+        .with_context(|| format!("Failed to read file: {}", path.display()))?;
+
+    parse_body(&content).with_context(|| format!("Failed to parse HCL file: {}", path.display()))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
     use std::fs;
     use tempfile::TempDir;
 
@@ -37,11 +35,15 @@ mod tests {
     fn test_parse_file_with_resource_block() {
         let temp_dir = TempDir::new().unwrap();
         let file = temp_dir.path().join("main.tf");
-        fs::write(&file, r#"
+        fs::write(
+            &file,
+            r#"
 resource "aws_instance" "web" {
   ami = "ami-12345"
 }
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
         let result = parse_terraform_file(&file);
         assert!(result.is_ok());
@@ -55,11 +57,15 @@ resource "aws_instance" "web" {
     fn test_parse_file_with_data_block() {
         let temp_dir = TempDir::new().unwrap();
         let file = temp_dir.path().join("data.tf");
-        fs::write(&file, r#"
+        fs::write(
+            &file,
+            r#"
 data "aws_ami" "example" {
   most_recent = true
 }
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
         let result = parse_terraform_file(&file);
         assert!(result.is_ok());
@@ -73,7 +79,11 @@ data "aws_ami" "example" {
     fn test_handle_invalid_hcl_syntax() {
         let temp_dir = TempDir::new().unwrap();
         let file = temp_dir.path().join("invalid.tf");
-        fs::write(&file, "resource \"aws_instance\" \"test\" { invalid syntax }").unwrap();
+        fs::write(
+            &file,
+            "resource \"aws_instance\" \"test\" { invalid syntax }",
+        )
+        .unwrap();
 
         let result = parse_terraform_file(&file);
         assert!(result.is_err());
@@ -103,4 +113,3 @@ data "aws_ami" "example" {
         assert_eq!(body.blocks().count(), 0);
     }
 }
-

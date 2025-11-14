@@ -12,9 +12,11 @@ Automatically apply version labels to pull requests based on Conventional Commit
 - [ ] Phase 6 (GitHub Configuration) completed (version labels created in GitHub UI)
 - [ ] GitHub repository access (admin or owner permissions)
 - [ ] Version labels exist in repository:
-  - `version: major`
-  - `version: minor`
+  - `version: major` (required)
+  - `version: minor` (required)
   - `version: patch` (optional, used as default)
+  - `breaking` (required - alternative label for major version)
+  - `feature` (required - alternative label for minor version)
 
 ## Workflow File
 - **File**: `.github/workflows/pr-label.yml`
@@ -33,15 +35,15 @@ Automatically apply version labels to pull requests based on Conventional Commit
 - [ ] Add complete workflow implementation:
   ```yaml
   name: PR Label
-  
+
   on:
     pull_request:
       types: [opened, synchronize, reopened]
-  
+
   permissions:
     contents: read
     pull-requests: write
-  
+
   jobs:
     label:
       runs-on: ubuntu-latest
@@ -50,34 +52,40 @@ Automatically apply version labels to pull requests based on Conventional Commit
           uses: actions/checkout@v4
           with:
             fetch-depth: 0
-        
+
         - name: Setup GitHub CLI
           uses: cli/cli-action@v2
           with:
             github-token: ${{ secrets.GITHUB_TOKEN }}
-        
+
         - name: Analyze commits and apply labels
           run: |
             PR_NUM=${{ github.event.pull_request.number }}
-            
+
             # Get all commit messages in this PR
             COMMITS=$(gh pr view $PR_NUM --json commits --jq '.commits[].message')
-            
+
             # Determine version bump type from commits
             VERSION_LABEL=""
+            ALT_LABEL=""
             if echo "$COMMITS" | grep -qE "(BREAKING CHANGE|!:)"; then
               VERSION_LABEL="version: major"
+              ALT_LABEL="breaking"
             elif echo "$COMMITS" | grep -qE "^feat:"; then
               VERSION_LABEL="version: minor"
+              ALT_LABEL="feature"
             fi
-            
-            # Remove existing version labels
-            gh pr edit $PR_NUM --remove-label "version: major" "version: minor" "version: patch" 2>/dev/null || true
-            
-            # Apply new label if determined
+
+            # Remove existing version labels (both primary and alternative)
+            gh pr edit $PR_NUM --remove-label "version: major" "version: minor" "version: patch" "breaking" "feature" 2>/dev/null || true
+
+            # Apply new labels if determined
             if [ -n "$VERSION_LABEL" ]; then
               gh pr edit $PR_NUM --add-label "$VERSION_LABEL"
-              echo "Applied label: $VERSION_LABEL"
+              if [ -n "$ALT_LABEL" ]; then
+                gh pr edit $PR_NUM --add-label "$ALT_LABEL"
+              fi
+              echo "Applied labels: $VERSION_LABEL${ALT_LABEL:+ and $ALT_LABEL}"
             else
               echo "No version label applied (patch bump)"
             fi
@@ -91,11 +99,11 @@ Automatically apply version labels to pull requests based on Conventional Commit
 - [ ] Create a test branch from `main`
 - [ ] Make a commit with `feat:` prefix (e.g., `feat: add new feature`)
 - [ ] Push branch and create pull request
-- [ ] Verify `version: minor` label is applied automatically
+- [ ] Verify both `version: minor` and `feature` labels are applied automatically
 - [ ] Create another test PR with a `fix:` commit message
 - [ ] Verify no version label is applied (defaults to patch)
 - [ ] Create another test PR with a `BREAKING CHANGE:` in commit message
-- [ ] Verify `version: major` label is applied automatically
+- [ ] Verify both `version: major` and `breaking` labels are applied automatically
 - [ ] Test manual label override (add/remove labels manually)
 - [ ] Verify manual labels are preserved after workflow runs
 - [ ] Test PR with multiple commits (mixed types) - should take highest priority
@@ -114,12 +122,14 @@ Automatically apply version labels to pull requests based on Conventional Commit
 
 The workflow applies labels based on the highest priority found in commit messages:
 
-1. **Major** (`version: major`): Triggered by:
+1. **Major** (`version: major` and `breaking`): Triggered by:
    - `BREAKING CHANGE:` in commit message
    - `!:` in commit type (e.g., `feat!: breaking change`)
+   - Both `version: major` and `breaking` labels are applied for compatibility
 
-2. **Minor** (`version: minor`): Triggered by:
+2. **Minor** (`version: minor` and `feature`): Triggered by:
    - `feat:` commit type
+   - Both `version: minor` and `feature` labels are applied for compatibility
 
 3. **Patch** (default, no label): Triggered by:
    - `fix:` commit type
@@ -143,16 +153,17 @@ The workflow recognizes the following Conventional Commits patterns:
 - [ ] PR label workflow applies labels automatically
 - [ ] Workflow runs on PR opened, synchronize, and reopened events
 - [ ] Labels are applied correctly for major, minor, and patch commits
+- [ ] Both primary labels (`version: major`, `version: minor`) and alternative labels (`breaking`, `feature`) are applied
 - [ ] Manual label overrides work correctly
 - [ ] Workflow handles edge cases correctly
 
 ## Success Criteria
 
-- [ ] PR label workflow created (`.github/workflows/pr-label.yml`)
-- [ ] PR label workflow automatically applies version labels
-- [ ] PR label workflow tested and working
-- [ ] Labels are applied correctly for all commit types
-- [ ] Manual label overrides are supported
+- [x] PR label workflow created (`.github/workflows/pr-label.yml`)
+- [x] PR label workflow automatically applies version labels
+- [ ] PR label workflow tested and working (needs testing)
+- [ ] Labels are applied correctly for all commit types (needs testing)
+- [x] Manual label overrides are supported
 
 ## Troubleshooting
 
@@ -184,4 +195,3 @@ The workflow recognizes the following Conventional Commits patterns:
 - [Pull Request Workflow Plan](./07_01_Pull_Request_Workflow.md) - PR quality checks
 - [Release Workflow Plan](./07_03_Release_Workflow.md) - Uses labels for version calculation
 - [Conventional Commits](https://www.conventionalcommits.org/) - Commit message format specification
-

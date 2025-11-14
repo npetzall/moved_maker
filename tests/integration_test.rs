@@ -1,3 +1,4 @@
+use pretty_assertions::assert_eq;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
@@ -9,11 +10,11 @@ fn get_binary_path() -> PathBuf {
     path.push("target");
     path.push("debug");
     path.push("move_maker");
-    
+
     // On Windows, add .exe extension
     #[cfg(windows)]
     path.set_extension("exe");
-    
+
     path
 }
 
@@ -24,9 +25,9 @@ fn test_single_resource_file() {
         .join("tests")
         .join("fixtures")
         .join("single_resource.tf");
-    
+
     fs::copy(&fixture_file, temp_dir.path().join("main.tf")).unwrap();
-    
+
     let binary = get_binary_path();
     let output = Command::new(&binary)
         .arg("--src")
@@ -35,9 +36,13 @@ fn test_single_resource_file() {
         .arg("compute")
         .output()
         .expect("Failed to execute command");
-    
-    assert!(output.status.success(), "Command failed: {}", String::from_utf8_lossy(&output.stderr));
-    
+
+    assert!(
+        output.status.success(),
+        "Command failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("# From: main.tf"));
     assert!(stdout.contains("moved"));
@@ -52,9 +57,9 @@ fn test_multiple_resources() {
         .join("tests")
         .join("fixtures")
         .join("multiple_resources.tf");
-    
+
     fs::copy(&fixture_file, temp_dir.path().join("main.tf")).unwrap();
-    
+
     let binary = get_binary_path();
     let output = Command::new(&binary)
         .arg("--src")
@@ -63,14 +68,14 @@ fn test_multiple_resources() {
         .arg("compute")
         .output()
         .expect("Failed to execute command");
-    
+
     assert!(output.status.success());
-    
+
     let stdout = String::from_utf8_lossy(&output.stdout);
     // Should have 3 moved blocks
     let moved_count = stdout.matches("moved").count();
     assert_eq!(moved_count, 3);
-    
+
     assert!(stdout.contains("aws_instance.web1"));
     assert!(stdout.contains("aws_instance.web2"));
     assert!(stdout.contains("aws_s3_bucket.data"));
@@ -83,9 +88,9 @@ fn test_mixed_resources_and_data() {
         .join("tests")
         .join("fixtures")
         .join("mixed_blocks.tf");
-    
+
     fs::copy(&fixture_file, temp_dir.path().join("main.tf")).unwrap();
-    
+
     let binary = get_binary_path();
     let output = Command::new(&binary)
         .arg("--src")
@@ -94,14 +99,14 @@ fn test_mixed_resources_and_data() {
         .arg("compute")
         .output()
         .expect("Failed to execute command");
-    
+
     assert!(output.status.success());
-    
+
     let stdout = String::from_utf8_lossy(&output.stdout);
     // Should have 1 moved block (resource only, data blocks are ignored)
     let moved_count = stdout.matches("moved").count();
     assert_eq!(moved_count, 1);
-    
+
     assert!(stdout.contains("aws_instance.web"));
     // Data blocks should not be processed
     assert!(!stdout.contains("data.aws_ami.example"));
@@ -113,10 +118,18 @@ fn test_multiple_files() {
     let fixtures_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests")
         .join("fixtures");
-    
-    fs::copy(fixtures_dir.join("single_resource.tf"), temp_dir.path().join("main.tf")).unwrap();
-    fs::copy(fixtures_dir.join("single_data.tf"), temp_dir.path().join("data.tf")).unwrap();
-    
+
+    fs::copy(
+        fixtures_dir.join("single_resource.tf"),
+        temp_dir.path().join("main.tf"),
+    )
+    .unwrap();
+    fs::copy(
+        fixtures_dir.join("single_data.tf"),
+        temp_dir.path().join("data.tf"),
+    )
+    .unwrap();
+
     let binary = get_binary_path();
     let output = Command::new(&binary)
         .arg("--src")
@@ -125,14 +138,14 @@ fn test_multiple_files() {
         .arg("compute")
         .output()
         .expect("Failed to execute command");
-    
+
     assert!(output.status.success());
-    
+
     let stdout = String::from_utf8_lossy(&output.stdout);
     // Should have 1 moved block (only from main.tf, data.tf is ignored)
     let moved_count = stdout.matches("moved").count();
     assert_eq!(moved_count, 1);
-    
+
     assert!(stdout.contains("# From: main.tf"));
     // Data blocks should not be processed
     assert!(!stdout.contains("# From: data.tf"));
@@ -145,7 +158,7 @@ fn test_invalid_hcl_file() {
         .join("tests")
         .join("fixtures")
         .join("invalid_syntax.tf");
-    
+
     fs::copy(&fixture_file, temp_dir.path().join("invalid.tf")).unwrap();
     // Also add a valid file to ensure it still processes
     fs::copy(
@@ -153,9 +166,10 @@ fn test_invalid_hcl_file() {
             .join("tests")
             .join("fixtures")
             .join("single_resource.tf"),
-        temp_dir.path().join("valid.tf")
-    ).unwrap();
-    
+        temp_dir.path().join("valid.tf"),
+    )
+    .unwrap();
+
     let binary = get_binary_path();
     let output = Command::new(&binary)
         .arg("--src")
@@ -164,14 +178,14 @@ fn test_invalid_hcl_file() {
         .arg("compute")
         .output()
         .expect("Failed to execute command");
-    
+
     // Should still succeed (warnings go to stderr)
     assert!(output.status.success());
-    
+
     // Should have warning about invalid file
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("Warning") || stderr.contains("invalid.tf"));
-    
+
     // Should still process valid file
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("aws_instance.web"));
@@ -180,7 +194,7 @@ fn test_invalid_hcl_file() {
 #[test]
 fn test_empty_directory() {
     let temp_dir = TempDir::new().unwrap();
-    
+
     let binary = get_binary_path();
     let output = Command::new(&binary)
         .arg("--src")
@@ -189,9 +203,9 @@ fn test_empty_directory() {
         .arg("compute")
         .output()
         .expect("Failed to execute command");
-    
+
     assert!(output.status.success());
-    
+
     let stdout = String::from_utf8_lossy(&output.stdout);
     // Should have no output or empty output
     assert!(stdout.trim().is_empty() || !stdout.contains("moved"));
@@ -204,9 +218,9 @@ fn test_resource_with_count() {
         .join("tests")
         .join("fixtures")
         .join("count_resource.tf");
-    
+
     fs::copy(&fixture_file, temp_dir.path().join("main.tf")).unwrap();
-    
+
     let binary = get_binary_path();
     let output = Command::new(&binary)
         .arg("--src")
@@ -215,9 +229,9 @@ fn test_resource_with_count() {
         .arg("compute")
         .output()
         .expect("Failed to execute command");
-    
+
     assert!(output.status.success());
-    
+
     let stdout = String::from_utf8_lossy(&output.stdout);
     // Count doesn't affect the address, should still generate moved block
     assert!(stdout.contains("moved"));
@@ -232,9 +246,9 @@ fn test_resource_with_for_each() {
         .join("tests")
         .join("fixtures")
         .join("for_each_resource.tf");
-    
+
     fs::copy(&fixture_file, temp_dir.path().join("main.tf")).unwrap();
-    
+
     let binary = get_binary_path();
     let output = Command::new(&binary)
         .arg("--src")
@@ -243,9 +257,9 @@ fn test_resource_with_for_each() {
         .arg("compute")
         .output()
         .expect("Failed to execute command");
-    
+
     assert!(output.status.success());
-    
+
     let stdout = String::from_utf8_lossy(&output.stdout);
     // for_each doesn't affect the address, should still generate moved block
     assert!(stdout.contains("moved"));
@@ -260,9 +274,9 @@ fn test_module_name_with_hyphens() {
         .join("tests")
         .join("fixtures")
         .join("single_resource.tf");
-    
+
     fs::copy(&fixture_file, temp_dir.path().join("main.tf")).unwrap();
-    
+
     let binary = get_binary_path();
     let output = Command::new(&binary)
         .arg("--src")
@@ -271,9 +285,9 @@ fn test_module_name_with_hyphens() {
         .arg("my-module")
         .output()
         .expect("Failed to execute command");
-    
+
     assert!(output.status.success());
-    
+
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("module.my-module.aws_instance.web"));
 }
@@ -285,9 +299,9 @@ fn test_module_name_with_underscores() {
         .join("tests")
         .join("fixtures")
         .join("single_resource.tf");
-    
+
     fs::copy(&fixture_file, temp_dir.path().join("main.tf")).unwrap();
-    
+
     let binary = get_binary_path();
     let output = Command::new(&binary)
         .arg("--src")
@@ -296,10 +310,9 @@ fn test_module_name_with_underscores() {
         .arg("my_module")
         .output()
         .expect("Failed to execute command");
-    
+
     assert!(output.status.success());
-    
+
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("module.my_module.aws_instance.web"));
 }
-

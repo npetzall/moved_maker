@@ -53,15 +53,15 @@ Common hooks for file validation and basic checks:
   - Single binary for easy integration
   - GitHub Action available
 - **Pre-commit Integration**: ✅ Yes (has `.pre-commit-hooks.yaml` - can be used as pre-commit repository)
-- **Custom Types**: ✅ Supported via `sumi.toml` configuration
+- **Custom Types**: ✅ Supported via `.config/sumi.toml` configuration
 - **Installation**: Pre-commit handles installation automatically when used as repository. Can also be installed manually: `cargo install git-sumi`, `pip install git-sumi`, `uv tool install git-sumi`, or via Chocolatey
-- **Configuration**: Uses `sumi.toml` file (can be initialized with `git sumi --init`)
+- **Configuration**: Uses `.config/sumi.toml` file (can be initialized with `git sumi --init config`)
 - **Documentation**: https://sumi.rs/
 - **Note**: Small but active project with good documentation. When used as pre-commit repository, installation is handled automatically by the pre-commit framework.
 
-#### git-sumi Configuration (`sumi.toml`)
+#### git-sumi Configuration (`.config/sumi.toml`)
 
-Recommended `sumi.toml` configuration for enforcing Conventional Commits:
+Recommended `.config/sumi.toml` configuration for enforcing Conventional Commits:
 
 ```toml
 # Enable Conventional Commits specification
@@ -112,7 +112,7 @@ quiet = false
 - `types_allowed`: Restricts commit types to standard Conventional Commits types (automatically enables `conventional`)
 - `whitespace = true`: Prevents whitespace issues that can affect tooling
 
-**Initialization**: Since `git-sumi` is installed and managed by the pre-commit hook, manually create a `sumi.toml` file in the repository root with the configuration above. The pre-commit hook will automatically use this configuration file when validating commit messages.
+**Initialization**: Since `git-sumi` is installed and managed by the pre-commit hook, manually create a `.config/sumi.toml` file with the configuration above. The pre-commit hook is configured to use this configuration file via `--config .config/sumi.toml --file` arguments when validating commit messages.
 
 **References**:
 - [git-sumi Configuration Documentation](https://sumi.rs/docs/configuration)
@@ -188,17 +188,17 @@ Comprehensive security scanning for licenses, vulnerabilities, and banned depend
 ```yaml
 - repo: local
   hooks:
-    - id: cargo-deny
-      name: cargo deny check
-      entry: bash -c 'cargo deny check'
-      language: system
-      types: [rust]
-      pass_filenames: false
-      always_run: true
-      stages: [pre-commit]
+      - id: cargo-deny
+        name: cargo deny check
+        entry: bash -c 'cargo deny check --config .config/deny.toml'
+        language: system
+        types: [rust]
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
 ```
 
-**Configuration**: Requires `deny.toml` file (already configured in this project)
+**Configuration**: Requires `.config/deny.toml` file (already configured in this project)
 
 **Benefits**:
 - ✅ License compliance checking
@@ -425,7 +425,7 @@ repos:
 
       - id: cargo-deny
         name: cargo deny check
-        entry: bash -c 'cargo deny check'
+        entry: bash -c 'cargo deny check --config .config/deny.toml'
         language: system
         types: [rust]
         pass_filenames: false
@@ -484,13 +484,13 @@ If tests are slow:
 
 If commit message validation fails:
 - Check the format matches: `<type>(<scope>): <subject>` (e.g., `feat(parser): add support for data blocks`)
-- Ensure type is one of the allowed types (see `sumi.toml` configuration section above)
+- Ensure type is one of the allowed types (see `.config/sumi.toml` configuration section above)
 - Use imperative mood for the subject (e.g., "add feature" not "added feature")
 - Ensure description starts with lowercase (if `description_case = "lower"` is set)
 - Ensure header doesn't end with a period (if `no_period = true` is set)
 - Ensure header doesn't exceed 72 characters (if `max_header_length = 72` is set)
-- Initialize configuration if needed: `git sumi --init config` (creates `sumi.toml`)
-- Review `sumi.toml` for custom rules and type definitions
+- Initialize configuration if needed: `git sumi --init config` (creates `.config/sumi.toml`)
+- Review `.config/sumi.toml` for custom rules and type definitions
 - Test your commit message: `git sumi --display` (shows parsed commit message)
 
 ### Clippy Warnings (`cargo clippy`)

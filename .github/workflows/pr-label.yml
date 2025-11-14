@@ -1,0 +1,55 @@
+name: PR Label
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup GitHub CLI
+        uses: cli/cli-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Analyze commits and apply labels
+        run: |
+          PR_NUM=${{ github.event.pull_request.number }}
+
+          # Get all commit messages in this PR
+          COMMITS=$(gh pr view $PR_NUM --json commits --jq '.commits[].message')
+
+          # Determine version bump type from commits
+          VERSION_LABEL=""
+          ALT_LABEL=""
+          if echo "$COMMITS" | grep -qE "(BREAKING CHANGE|!:)"; then
+            VERSION_LABEL="version: major"
+            ALT_LABEL="breaking"
+          elif echo "$COMMITS" | grep -qE "^feat:"; then
+            VERSION_LABEL="version: minor"
+            ALT_LABEL="feature"
+          fi
+
+          # Remove existing version labels (both primary and alternative)
+          gh pr edit $PR_NUM --remove-label "version: major" "version: minor" "version: patch" "breaking" "feature" 2>/dev/null || true
+
+          # Apply new labels if determined
+          if [ -n "$VERSION_LABEL" ]; then
+            gh pr edit $PR_NUM --add-label "$VERSION_LABEL"
+            if [ -n "$ALT_LABEL" ]; then
+              gh pr edit $PR_NUM --add-label "$ALT_LABEL"
+            fi
+            echo "Applied labels: $VERSION_LABEL${ALT_LABEL:+ and $ALT_LABEL}"
+          else
+            echo "No version label applied (patch bump)"
+          fi

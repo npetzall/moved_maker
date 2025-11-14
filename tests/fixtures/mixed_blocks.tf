@@ -14,4 +14,3 @@ variable "test" {
 locals {
   x = 1
 }
-

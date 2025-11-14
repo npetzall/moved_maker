@@ -33,20 +33,20 @@ cargo install cargo-deny
 **Usage**:
 ```bash
 # Check all issues (licenses, vulnerabilities, banned deps)
-cargo deny check
+cargo deny check --config .config/deny.toml
 
 # Check only licenses
-cargo deny check licenses
+cargo deny check --config .config/deny.toml licenses
 
 # Check only vulnerabilities
-cargo deny check advisories
+cargo deny check --config .config/deny.toml advisories
 
 # Check only banned dependencies
-cargo deny check bans
+cargo deny check --config .config/deny.toml bans
 ```
 
 **Configuration**:
-Create `deny.toml` in project root:
+Create `.config/deny.toml` in the `.config` directory:
 ```toml
 [advisories]
 # Vulnerability database sources
@@ -100,7 +100,7 @@ deny = [
   run: cargo install cargo-deny
 
 - name: Run security checks
-  run: cargo deny check
+  run: cargo deny check --config .config/deny.toml
 ```
 
 ---
@@ -319,7 +319,7 @@ Four security tools are selected and will be used together to provide comprehens
 
 ### Phase 1: Comprehensive Security (cargo-deny) ✅ Selected
 1. Install `cargo-deny`
-2. Create `deny.toml` configuration
+2. Create `.config/deny.toml` configuration
 3. Configure license policy
 4. Configure vulnerability policy
 5. Run initial checks
@@ -397,7 +397,7 @@ Add to `.github/workflows/quality.yml`:
         run: cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
 
       - name: Run cargo-deny checks (blocking)
-        run: cargo deny check
+        run: cargo deny check --config .config/deny.toml
 
       - name: Update vulnerability database
         run: cargo audit update
@@ -445,10 +445,14 @@ cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
 # Initialize cargo-deny
 cargo deny init
 
-# Edit deny.toml to configure policies
+# Move deny.toml to .config directory
+mkdir -p .config
+mv deny.toml .config/deny.toml
+
+# Edit .config/deny.toml to configure policies
 
 # Run security checks
-cargo deny check
+cargo deny check --config .config/deny.toml
 cargo audit
 cargo geiger
 
@@ -468,10 +472,14 @@ cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
 # Initialize cargo-deny
 cargo deny init
 
-# Edit deny.toml to configure policies
+# Move deny.toml to .config directory
+mkdir -p .config
+mv deny.toml .config/deny.toml
+
+# Edit .config/deny.toml to configure policies
 
 # Run security checks
-cargo deny check
+cargo deny check --config .config/deny.toml
 cargo audit
 cargo geiger
 

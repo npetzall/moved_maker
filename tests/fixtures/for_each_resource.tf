@@ -6,4 +6,3 @@ resource "aws_instance" "web" {
   ami           = each.value
   instance_type = "t3.micro"
 }
-

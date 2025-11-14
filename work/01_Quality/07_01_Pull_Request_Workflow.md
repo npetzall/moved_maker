@@ -31,7 +31,7 @@ Integrate security checks, test runner, code coverage, and pre-commit hooks into
   - [ ] Add checkout step
   - [ ] Add Rust installation step
   - [ ] Add security tools installation step: `cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable`
-  - [ ] Add cargo-deny check step (blocking): `cargo deny check`
+  - [ ] Add cargo-deny check step (blocking): `cargo deny check --config .config/deny.toml`
   - [ ] Add cargo-audit update step: `cargo audit update`
   - [ ] Add cargo-audit check step (blocking): `cargo audit --deny warnings`
   - [ ] Add cargo-geiger scan step (blocking): `cargo geiger --output-format json > geiger-report.json`
@@ -59,6 +59,7 @@ Integrate security checks, test runner, code coverage, and pre-commit hooks into
     - name: Install cargo-nextest
       uses: taiki-e/install-action@cargo-nextest
     ```
+    - [ ] Note: `taiki-e/install-action@cargo-nextest` is a GitHub Action for CI/CD workflows. For local installation, use `cargo install cargo-nextest` (see Phase 2: Test Runner).
   - [ ] Update test step to use cargo-nextest:
     ```yaml
     - name: Run tests
@@ -130,18 +131,18 @@ Integrate security checks, test runner, code coverage, and pre-commit hooks into
     ```yaml
     - name: Install bc (for coverage threshold calculations)
       run: sudo apt-get update && sudo apt-get install -y bc
-    
+
     - name: Check coverage thresholds
       run: |
         # Generate coverage and extract percentages
         cargo llvm-cov nextest --all-features --summary-only > coverage-summary.txt
         cat coverage-summary.txt
-        
+
         # Extract coverage percentages from summary
         LINE_COV=$(grep -oP '^\s*Lines:\s+\K[\d.]+' coverage-summary.txt || echo "0")
         BRANCH_COV=$(grep -oP '^\s*Branches:\s+\K[\d.]+' coverage-summary.txt || echo "0")
         FUNC_COV=$(grep -oP '^\s*Functions:\s+\K[\d.]+' coverage-summary.txt || echo "0")
-        
+
         # Check thresholds (Line > 80%, Branch > 70%, Function > 85%)
         FAILED=0
         if (( $(echo "$LINE_COV < 80" | bc -l) )); then
@@ -150,21 +151,21 @@ Integrate security checks, test runner, code coverage, and pre-commit hooks into
         else
           echo "✅ Line coverage: $LINE_COV% (threshold: 80%)"
         fi
-        
+
         if (( $(echo "$BRANCH_COV < 70" | bc -l) )); then
           echo "❌ Branch coverage $BRANCH_COV% is below threshold of 70%"
           FAILED=1
         else
           echo "✅ Branch coverage: $BRANCH_COV% (threshold: 70%)"
         fi
-        
+
         if (( $(echo "$FUNC_COV < 85" | bc -l) )); then
           echo "❌ Function coverage $FUNC_COV% is below threshold of 85%"
           FAILED=1
         else
           echo "✅ Function coverage: $FUNC_COV% (threshold: 85%)"
         fi
-        
+
         if [ $FAILED -eq 1 ]; then
           echo "Coverage thresholds not met. Failing CI."
           exit 1
@@ -194,27 +195,27 @@ For better maintainability, create a separate script file:
   ```bash
   #!/bin/bash
   set -e
-  
+
   # Check if bc is installed (required for threshold comparisons)
   if ! command -v bc &> /dev/null; then
     echo "Error: bc is required but not installed. Install with: sudo apt-get install bc"
     exit 1
   fi
-  
+
   # Generate coverage summary
   cargo llvm-cov nextest --all-features --summary-only > coverage-summary.txt
-  
+
   # Extract percentages (adjust regex based on actual output format)
   LINE_COV=$(grep -oP 'Lines:\s+\K[\d.]+' coverage-summary.txt || echo "0")
   BRANCH_COV=$(grep -oP 'Branches:\s+\K[\d.]+' coverage-summary.txt || echo "0")
   FUNC_COV=$(grep -oP 'Functions:\s+\K[\d.]+' coverage-summary.txt || echo "0")
-  
+
   # Check thresholds
   THRESHOLDS_MET=true
   [ $(echo "$LINE_COV < 80" | bc -l) -eq 1 ] && echo "Line coverage $LINE_COV% < 80%" && THRESHOLDS_MET=false
   [ $(echo "$BRANCH_COV < 70" | bc -l) -eq 1 ] && echo "Branch coverage $BRANCH_COV% < 70%" && THRESHOLDS_MET=false
   [ $(echo "$FUNC_COV < 85" | bc -l) -eq 1 ] && echo "Function coverage $FUNC_COV% < 85%" && THRESHOLDS_MET=false
-  
+
   [ "$THRESHOLDS_MET" = false ] && exit 1
   exit 0
   ```
@@ -272,13 +273,13 @@ For better maintainability, create a separate script file:
         with:
           python-version: '3.11'
       - uses: dtolnay/rust-toolchain@stable
-      
+
       - name: Install pre-commit
         run: pip install pre-commit
-      
+
       - name: Install cargo-nextest
         uses: taiki-e/install-action@cargo-nextest
-      
+
       - name: Run pre-commit
         run: pre-commit run --all-files
   ```
@@ -410,14 +411,14 @@ act pull_request --secret-file .secrets
 
 ## Success Criteria
 
-- [ ] Security checks integrated into PR workflow (blocking)
-- [ ] Test runner (cargo-nextest) integrated into PR workflow with JUnit XML output
-- [ ] Test results uploaded as artifacts in PR workflow
-- [ ] Code coverage integrated into PR workflow (blocking)
-- [ ] Coverage thresholds enforced in CI (Line > 80%, Branch > 70%, Function > 85%)
-- [ ] Pre-commit hooks integrated into PR workflow
-- [ ] Pre-commit job runs in CI and passes
-- [ ] Workflow tested and working
+- [x] Security checks integrated into PR workflow (blocking)
+- [x] Test runner (cargo-nextest) integrated into PR workflow with JUnit XML output
+- [x] Test results uploaded as artifacts in PR workflow
+- [x] Code coverage integrated into PR workflow (blocking)
+- [x] Coverage thresholds enforced in CI (Line > 80%, Branch > 70%, Function > 85%)
+- [x] Pre-commit hooks integrated into PR workflow
+- [ ] Pre-commit job runs in CI and passes (needs testing)
+- [ ] Workflow tested and working (needs testing)
 
 ## Troubleshooting
 
@@ -446,4 +447,3 @@ act pull_request --secret-file .secrets
 - [Main Continuous Delivery Plan](./07_Continuous_Delivery.md) - Overview and architecture
 - [PR Label Workflow Plan](./07_02_PR_Label_Workflow.md) - PR label workflow
 - [Release Workflow Plan](./07_03_Release_Workflow.md) - Release workflow
-

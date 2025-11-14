@@ -49,7 +49,7 @@ See VERSIONING.md for detailed versioning strategy.
 - [ ] Add workflow name and trigger:
   ```yaml
   name: Release
-  
+
   on:
     push:
       branches:
@@ -67,22 +67,22 @@ See VERSIONING.md for detailed versioning strategy.
       steps:
         - name: Checkout code
           uses: actions/checkout@v4
-        
+
         - name: Install Rust
           uses: dtolnay/rust-toolchain@stable
-        
+
         - name: Install security tools
           run: cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
-        
+
         - name: Run cargo-deny checks (blocking)
           run: cargo deny check
-        
+
         - name: Update vulnerability database
           run: cargo audit update
-        
+
         - name: Run cargo-audit checks (blocking)
           run: cargo audit --deny warnings
-        
+
         - name: Run cargo-geiger scan (blocking)
           run: cargo geiger --output-format json > geiger-report.json
   ```
@@ -123,36 +123,42 @@ See VERSIONING.md for detailed versioning strategy.
   ```yaml
         - name: Fetch all tags
           run: git fetch --tags --force
-        
+
         - name: Calculate version from PR labels
           id: version
           run: |
+            set -e  # Exit on error - abort workflow if version calculation fails
+
             # Get latest tag matching v* pattern
             LATEST_TAG=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "")
-            
+
             if [ -z "$LATEST_TAG" ]; then
-              # No tag found, use base version from Cargo.toml
+              # No tag found (first release), use base version from Cargo.toml
               BASE_VERSION=$(grep '^version = ' Cargo.toml | cut -d '"' -f 2)
+              if [ -z "$BASE_VERSION" ]; then
+                echo "Error: No version found in Cargo.toml and no previous tags exist"
+                exit 1
+              fi
               VERSION="$BASE_VERSION"
-              echo "No previous tag found, using base version: $VERSION"
+              echo "No previous tag found (first release), using base version from Cargo.toml: $VERSION"
             else
               # Extract version from tag (remove 'v' prefix)
               BASE_VERSION="${LATEST_TAG#v}"
-              
+
               # Parse version components
               IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
-              
+
               # Get merged PRs since last tag
               TAG_DATE=$(git log -1 --format=%ct ${LATEST_TAG})
               PRS=$(gh pr list --state merged --base main --json number,labels,mergedAt --limit 100)
-              
+
               MAJOR_BUMP=false
               MINOR_BUMP=false
-              
+
               # Check labels on merged PRs (labels are source of truth, already auto-applied)
               for PR_NUM in $(echo "$PRS" | jq -r '.[] | select(.mergedAt != null) | select((.mergedAt | fromdateiso8601) > '$TAG_DATE') | .number'); do
                 LABELS=$(gh pr view $PR_NUM --json labels --jq '.labels[].name' | tr '\n' ' ')
-                
+
                 if echo "$LABELS" | grep -qE "(version: major|breaking)"; then
                   MAJOR_BUMP=true
                   echo "PR #$PR_NUM has major version label"
@@ -162,7 +168,7 @@ See VERSIONING.md for detailed versioning strategy.
                 fi
                 # No label = patch bump (handled below)
               done
-              
+
               # Calculate version based on highest bump type found
               if [ "$MAJOR_BUMP" = true ]; then
                 MAJOR=$((MAJOR + 1))
@@ -179,18 +185,20 @@ See VERSIONING.md for detailed versioning strategy.
                 PATCH=$((PATCH + COMMIT_COUNT))
                 BUMP_TYPE="PATCH"
               fi
-              
+
               VERSION="${MAJOR}.${MINOR}.${PATCH}"
-              
+
               echo "Latest tag: $LATEST_TAG"
               echo "Bump type: $BUMP_TYPE"
               echo "Calculated version: $VERSION"
             fi
-            
+
             echo "version=$VERSION" >> $GITHUB_OUTPUT
             echo "tag_name=v$VERSION" >> $GITHUB_OUTPUT
           ```
   - [ ] Note: `jq` is pre-installed on GitHub Actions `ubuntu-latest` runners, so no installation step is needed
+  - [ ] Note: The script uses `set -e` to abort the workflow if version calculation fails. If any step in the version calculation fails, the workflow will abort and no release will be created.
+  - [ ] Note: **First release behavior**: When no tags exist, the workflow uses the version from `Cargo.toml` as-is. This creates the first release and tag, which subsequent releases will use as a reference point.
 - [ ] Add Cargo.toml version update step:
   ```yaml
         - name: Update Cargo.toml version
@@ -346,18 +354,19 @@ See VERSIONING.md for detailed versioning strategy.
         - name: Generate release notes
           id: release_notes
           run: |
-            # Get commits since last tag, or all commits if no tags
+            # Get commits since last tag, or complete history if no tags (first release)
             if git describe --tags --abbrev=0 2>/dev/null; then
               LAST_TAG=$(git describe --tags --abbrev=0)
               NOTES=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
             else
-              NOTES=$(git log --pretty=format:"- %s (%h)" --no-merges -10)
+              # First release: read complete history
+              NOTES=$(git log --pretty=format:"- %s (%h)" --no-merges)
             fi
-            
+
             if [ -z "$NOTES" ]; then
               NOTES="- No significant changes"
             fi
-            
+
             {
               echo "## Changes"
               echo ""
@@ -371,11 +380,12 @@ See VERSIONING.md for detailed versioning strategy.
               echo "- macOS (Intel): \`move_maker-macos-x86_64\`"
               echo "- macOS (Apple Silicon): \`move_maker-macos-aarch64\`"
             } > release_notes.md
-            
+
             echo "notes<<EOF" >> $GITHUB_OUTPUT
             cat release_notes.md >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
       ```
+      - [ ] Note: If no previous tag exists (first release), the release notes include the complete git history. Subsequent releases only include commits since the last tag.
 - [ ] Add artifact download step:
   ```yaml
         - name: Download all artifacts
@@ -383,6 +393,7 @@ See VERSIONING.md for detailed versioning strategy.
           with:
             path: artifacts
       ```
+      - [ ] Note: Artifacts are downloaded to the `artifacts/` directory. The artifact names match the `artifact_name` values from the build matrix (e.g., `move_maker-linux-x86_64`, `move_maker-linux-x86_64.sha256`). The file paths in the release creation step must match these artifact names.
 - [ ] Add Cargo.toml version update step (for consistency in release job):
   ```yaml
         - name: Update Cargo.toml with calculated version
@@ -430,6 +441,7 @@ See VERSIONING.md for detailed versioning strategy.
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       ```
+      - [ ] Note: The `files` paths are relative to the workspace root. Since artifacts are downloaded to `artifacts/` directory (from the download-artifact step), the paths must be prefixed with `artifacts/`. The artifact names in the build matrix (`artifact_name`) determine the directory structure when artifacts are downloaded.
 - [ ] Verify release job is complete
 - [ ] Commit release job to workflow
 
@@ -534,29 +546,33 @@ See VERSIONING.md for detailed versioning strategy.
 
 ## Success Criteria
 
-- [ ] Security checks integrated into release workflow (blocking)
-- [ ] Release workflow created (`.github/workflows/release.yaml`)
-- [ ] Security checks run before builds (blocking)
-- [ ] Version is calculated from PR labels
-- [ ] Binaries are built for all target platforms
-- [ ] Release is created automatically on push to `main`
-- [ ] Release includes binaries and checksums
-- [ ] Release notes are generated automatically
-- [ ] Git tag is created with version
-- [ ] Cargo.toml version is updated
-- [ ] Workflow tested and working
+- [x] Security checks integrated into release workflow (blocking)
+- [x] Release workflow created (`.github/workflows/release.yaml`)
+- [x] Security checks run before builds (blocking)
+- [x] Version is calculated from PR labels
+- [x] Binaries are built for all target platforms
+- [x] Release is created automatically on push to `main`
+- [x] Release includes binaries and checksums
+- [x] Release notes are generated automatically
+- [x] Git tag is created with version
+- [x] Cargo.toml version is updated
+- [ ] Workflow tested and working (needs testing)
 - [ ] Documentation updated
 
 ## Notes
 
 - All releases are triggered automatically on pushes to `main`
+- **Direct commits to `main` are prohibited** (enforced by branch protection rules configured in Phase 6)
 - All security tools are **blocking** in CI/CD workflows
 - Security checks must pass before builds or releases proceed
 - Security checks run in both PR and release workflows
 - Version is calculated from PR labels applied by PR label workflow
+- **First release**: Uses version from `Cargo.toml` when no tags exist, creating the first tag for subsequent releases
+- **Version calculation failure**: If version calculation fails (script exits with error), the workflow aborts and no release is created
 - Binaries are built with embedded dependency info (cargo-auditable)
 - Release binaries are audited after build
 - Checksums are generated for all binaries
+- **Artifact paths**: Artifacts are downloaded to `artifacts/` directory, and file paths in release creation must match the artifact names from the build matrix
 
 ## Troubleshooting
 
@@ -566,11 +582,13 @@ See VERSIONING.md for detailed versioning strategy.
 - Fix security issues before retrying
 
 ### Version Calculation Fails
+- **Workflow behavior**: If version calculation fails (script exits with error), the workflow aborts and no release is created
 - Verify PR label workflow is working (see Phase 7.2)
 - Check that PRs have appropriate labels
 - Verify GitHub CLI has correct permissions
 - Check version calculation script logic
 - Verify version labels exist in repository (created in Phase 6)
+- For first release: Verify `Cargo.toml` has a valid version string (required when no tags exist)
 
 ### Build Fails on Specific Platform
 - Check platform-specific build issues
@@ -593,4 +611,3 @@ See VERSIONING.md for detailed versioning strategy.
 - [GitHub Actions: Creating Releases](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#release)
 - [CONTINUOUS_DELIVERY.md](../plan/01_Quality/CONTINUOUS_DELIVERY.md) - Detailed CD documentation
 - [VERSIONING.md](../plan/01_Quality/VERSIONING.md) - Versioning strategy documentation
-

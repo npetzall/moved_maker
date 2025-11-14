@@ -1,0 +1,27 @@
+# Default owners for the entire repository
+* @npetzall
+
+# Source code
+/src/ @npetzall
+
+# Tests
+/tests/ @npetzall
+
+# Configuration files
+Cargo.toml @npetzall
+Cargo.lock @npetzall
+deny.toml @npetzall
+sumi.toml @npetzall
+
+# GitHub workflows and configuration
+/.github/ @npetzall
+
+# Documentation
+*.md @npetzall
+CONTRIBUTING.md @npetzall
+DEVELOPMENT.md @npetzall
+SECURITY.md @npetzall
+TOOLING.md @npetzall
+
+# Pre-commit configuration
+/.pre-commit-config.yaml @npetzall

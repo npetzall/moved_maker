@@ -1,0 +1,144 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install security tools
+        run: cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
+
+      - name: Run cargo-deny checks (blocking)
+        run: cargo deny check --config .config/deny.toml
+
+      - name: Update vulnerability database
+        run: cargo audit update
+
+      - name: Run cargo-audit checks (blocking)
+        run: cargo audit --deny warnings
+
+      - name: Run cargo-geiger scan (blocking)
+        run: cargo geiger --output-format json > geiger-report.json
+
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@cargo-nextest
+
+      - name: Run tests
+        run: cargo nextest run --junit-xml test-results.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.os }}
+          path: test-results.xml
+
+      - name: Run doctests
+        run: cargo test --doc
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@cargo-nextest
+
+      - name: Install cargo-llvm-cov
+        run: cargo install cargo-llvm-cov
+
+      - name: Generate coverage
+        run: cargo llvm-cov nextest --all-features --lcov --output-path lcov.info
+
+      - name: Install bc (for coverage threshold calculations)
+        run: sudo apt-get update && sudo apt-get install -y bc
+
+      - name: Check coverage thresholds
+        run: |
+          # Generate coverage and extract percentages
+          cargo llvm-cov nextest --all-features --summary-only > coverage-summary.txt
+          cat coverage-summary.txt
+
+          # Extract coverage percentages from summary
+          LINE_COV=$(grep -oP '^\s*Lines:\s+\K[\d.]+' coverage-summary.txt || echo "0")
+          BRANCH_COV=$(grep -oP '^\s*Branches:\s+\K[\d.]+' coverage-summary.txt || echo "0")
+          FUNC_COV=$(grep -oP '^\s*Functions:\s+\K[\d.]+' coverage-summary.txt || echo "0")
+
+          # Check thresholds (Line > 80%, Branch > 70%, Function > 85%)
+          FAILED=0
+          if (( $(echo "$LINE_COV < 80" | bc -l) )); then
+            echo "❌ Line coverage $LINE_COV% is below threshold of 80%"
+            FAILED=1
+          else
+            echo "✅ Line coverage: $LINE_COV% (threshold: 80%)"
+          fi
+
+          if (( $(echo "$BRANCH_COV < 70" | bc -l) )); then
+            echo "❌ Branch coverage $BRANCH_COV% is below threshold of 70%"
+            FAILED=1
+          else
+            echo "✅ Branch coverage: $BRANCH_COV% (threshold: 70%)"
+          fi
+
+          if (( $(echo "$FUNC_COV < 85" | bc -l) )); then
+            echo "❌ Function coverage $FUNC_COV% is below threshold of 85%"
+            FAILED=1
+          else
+            echo "✅ Function coverage: $FUNC_COV% (threshold: 85%)"
+          fi
+
+          if [ $FAILED -eq 1 ]; then
+            echo "Coverage thresholds not met. Failing CI."
+            exit 1
+          fi
+
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@cargo-nextest
+
+      - name: Run pre-commit
+        run: pre-commit run --all-files

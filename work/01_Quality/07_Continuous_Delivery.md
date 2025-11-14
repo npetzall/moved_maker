@@ -29,13 +29,13 @@ graph TB
         PR --> PRTest[Test Runner]
         PR --> PRCoverage[Code Coverage]
         PR --> PRPreCommit[Pre-commit Hooks]
-        
+
         PRSecurity --> PRMerge{All Checks Pass?}
         PRTest --> PRMerge
         PRCoverage --> PRMerge
         PRPreCommit --> PRMerge
     end
-    
+
     subgraph "Release Workflow"
         MainPush[Push to main]
         MainPush --> Security[Security Job]
@@ -44,19 +44,19 @@ graph TB
         Version --> Build2[Build: Linux ARM64]
         Version --> Build3[Build: macOS Intel]
         Version --> Build4[Build: macOS ARM64]
-        
+
         Build1 --> Release[Release Job]
         Build2 --> Release
         Build3 --> Release
         Build4 --> Release
-        
+
         Release --> GitTag[Create Git Tag]
         Release --> GitHubRelease[Create GitHub Release]
     end
-    
+
     PRMerge -->|Merge PR| MainPush
     PRLabel -->|Apply Labels| Version
-    
+
     style PRSecurity fill:#ffcccc
     style Security fill:#ffcccc
     style PRTest fill:#ccffcc
@@ -155,18 +155,18 @@ The recommended implementation order is:
 See [07_01_Pull_Request_Workflow.md](./07_01_Pull_Request_Workflow.md) for detailed implementation tasks.
 
 **Summary**:
-- [ ] Integrate security checks into PR workflow (blocking)
-- [ ] Integrate test runner (cargo-nextest) with JUnit XML output
-- [ ] Integrate code coverage with threshold enforcement
-- [ ] Integrate pre-commit hooks
+- [x] Integrate security checks into PR workflow (blocking)
+- [x] Integrate test runner (cargo-nextest) with JUnit XML output
+- [x] Integrate code coverage with threshold enforcement
+- [x] Integrate pre-commit hooks
 
 ### Phase 7.2: PR Label Workflow
 
 See [07_02_PR_Label_Workflow.md](./07_02_PR_Label_Workflow.md) for detailed implementation tasks.
 
 **Summary**:
-- [ ] Create PR label workflow file
-- [ ] Implement commit analysis and label application logic
+- [x] Create PR label workflow file
+- [x] Implement commit analysis and label application logic
 - [ ] Test workflow with various commit types
 
 ### Phase 7.3: Release Workflow
@@ -174,63 +174,79 @@ See [07_02_PR_Label_Workflow.md](./07_02_PR_Label_Workflow.md) for detailed impl
 See [07_03_Release_Workflow.md](./07_03_Release_Workflow.md) for detailed implementation tasks.
 
 **Summary**:
-- [ ] Create release workflow file
-- [ ] Add security job (blocking)
-- [ ] Add version calculation job (reads PR labels)
-- [ ] Add multi-platform build job
-- [ ] Add release job (creates GitHub release)
+- [x] Create release workflow file
+- [x] Add security job (blocking)
+- [x] Add version calculation job (reads PR labels)
+- [x] Add multi-platform build job
+- [x] Add release job (creates GitHub release)
 
 ## Success Criteria
 
-- [ ] Security checks integrated into PR workflow (blocking)
-- [ ] Test runner (cargo-nextest) integrated into PR workflow with JUnit XML output
-- [ ] Test results uploaded as artifacts in PR workflow
-- [ ] Code coverage integrated into PR workflow (blocking)
-- [ ] Coverage thresholds enforced in CI (Line > 80%, Branch > 70%, Function > 85%)
-- [ ] Pre-commit hooks integrated into PR workflow
-- [ ] Pre-commit job runs in CI and passes
-- [ ] PR label workflow created (`.github/workflows/pr-label.yml`)
-- [ ] PR label workflow automatically applies version labels
-- [ ] PR label workflow tested and working
-- [ ] Security checks integrated into release workflow (blocking)
-- [ ] Release workflow created (`.github/workflows/release.yaml`)
-- [ ] Security checks run before builds (blocking)
-- [ ] Version is calculated from PR labels
-- [ ] Binaries are built for all target platforms
-- [ ] Release is created automatically on push to `main`
-- [ ] Release includes binaries and checksums
-- [ ] Release notes are generated automatically
-- [ ] Git tag is created with version
-- [ ] Cargo.toml version is updated
-- [ ] Workflow tested and working
+- [x] Security checks integrated into PR workflow (blocking)
+- [x] Test runner (cargo-nextest) integrated into PR workflow with JUnit XML output
+- [x] Test results uploaded as artifacts in PR workflow
+- [x] Code coverage integrated into PR workflow (blocking)
+- [x] Coverage thresholds enforced in CI (Line > 80%, Branch > 70%, Function > 85%)
+- [x] Pre-commit hooks integrated into PR workflow
+- [ ] Pre-commit job runs in CI and passes (needs testing)
+- [x] PR label workflow created (`.github/workflows/pr-label.yml`)
+- [x] PR label workflow automatically applies version labels
+- [ ] PR label workflow tested and working (needs testing)
+- [x] Security checks integrated into release workflow (blocking)
+- [x] Release workflow created (`.github/workflows/release.yaml`)
+- [x] Security checks run before builds (blocking)
+- [x] Version is calculated from PR labels
+- [x] Binaries are built for all target platforms
+- [x] Release is created automatically on push to `main`
+- [x] Release includes binaries and checksums
+- [x] Release notes are generated automatically
+- [x] Git tag is created with version
+- [x] Cargo.toml version is updated
+- [ ] Workflow tested and working (needs testing)
 - [ ] Documentation updated
 
 ## Release Platforms
 
-- Linux x86_64 (`x86_64-unknown-linux-gnu`)
-- Linux ARM64 (`aarch64-unknown-linux-gnu`)
-- macOS Intel (`x86_64-apple-darwin`)
-- macOS Apple Silicon (`aarch64-apple-darwin`)
+The release workflow builds binaries for the following platforms:
+- Linux x86_64 (`x86_64-unknown-linux-gnu`) → `move_maker-linux-x86_64`
+- Linux ARM64 (`aarch64-unknown-linux-gnu`) → `move_maker-linux-aarch64`
+- macOS Intel (`x86_64-apple-darwin`) → `move_maker-macos-x86_64`
+- macOS Apple Silicon (`aarch64-apple-darwin`) → `move_maker-macos-aarch64`
+
+**Binary Name**: The compiled binary is named `move_maker` (matching the Cargo package name).
 
 ## Version Calculation
 
 Version is calculated from PR labels (from Phase 6):
 - `version: major` or `breaking` → MAJOR bump
 - `version: minor` or `feature` → MINOR bump
-- No label → PATCH bump (by commit count)
+- No label → PATCH bump (by commit count since last tag)
+
+**Patch Version Details**: When no version label is present, the patch version is incremented by the number of commits since the last tag. For example, if the last tag was `v1.0.0` and there are 3 commits since then, the new version will be `v1.0.3`.
+
+**Multiple PRs**: If multiple PRs are merged in a single push to `main`, the version calculation checks all merged PRs since the last tag and uses the highest priority label found (major > minor > patch). If any PR has a major label, the version is bumped major regardless of other labels.
+
+**Note**: The PR Label Workflow (Phase 7.2) applies both the primary labels (`version: major`, `version: minor`) and alternative labels (`breaking`, `feature`) to ensure compatibility with the version calculation logic.
+
+**First Release**: On the first push to `main` (when no tags exist), the workflow uses the version from `Cargo.toml` as the base version. This creates the first release and tag, which subsequent releases will use as a reference point.
 
 See VERSIONING.md for detailed versioning strategy.
 
 ## Notes
 
 - All releases are triggered automatically on pushes to `main`
+- **Direct commits to `main` are prohibited** (enforced by branch protection rules configured in Phase 6)
 - All security tools are **blocking** in CI/CD workflows
 - Security checks must pass before builds or releases proceed
 - Security checks run in both PR and release workflows
 - Version is calculated from PR labels applied by PR label workflow
+- **Multiple PRs**: When multiple PRs are merged in a single push, the version calculation checks all merged PRs since the last tag and uses the highest priority label (major > minor > patch)
+- **First release**: Uses version from `Cargo.toml` when no tags exist, creating the first tag for subsequent releases
+- **Version calculation failure**: If version calculation fails, the workflow aborts and no release is created
 - Binaries are built with embedded dependency info (cargo-auditable)
 - Release binaries are audited after build
 - Checksums are generated for all binaries
+- **Workflow coordination**: The PR Label Workflow applies labels to PRs before they are merged. The Release Workflow reads labels from merged PRs when calculating versions. This ensures labels are available when the release workflow runs after a merge to `main`.
 
 ## Troubleshooting
 
@@ -240,11 +256,13 @@ See VERSIONING.md for detailed versioning strategy.
 - Fix security issues before retrying
 
 ### Version Calculation Fails
+- **Workflow behavior**: If version calculation fails, the workflow aborts and no release is created
 - Verify PR label workflow is working (see [PR Label Workflow](./07_02_PR_Label_Workflow.md))
 - Check that PRs have appropriate labels
 - Verify GitHub CLI has correct permissions
 - Check version calculation script logic (see [Release Workflow](./07_03_Release_Workflow.md))
 - Verify version labels exist in repository (created in Phase 6)
+- For first release: Verify `Cargo.toml` has a valid version string
 
 ### Build Fails on Specific Platform
 - Check platform-specific build issues
@@ -270,4 +288,3 @@ See VERSIONING.md for detailed versioning strategy.
 - [GitHub Actions: Creating Releases](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#release)
 - [CONTINUOUS_DELIVERY.md](../plan/01_Quality/CONTINUOUS_DELIVERY.md) - Detailed CD documentation
 - [VERSIONING.md](../plan/01_Quality/VERSIONING.md) - Versioning strategy documentation
-

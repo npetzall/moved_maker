@@ -86,4 +86,4 @@ The module name must be a valid Terraform identifier:
 
 ## License
 
-This project is provided as-is for use in Terraform refactoring workflows.
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.

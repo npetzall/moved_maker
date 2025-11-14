@@ -392,7 +392,7 @@ To run all security checks locally:
 
 ```bash
 # Update advisory database and run all checks
-cargo audit && cargo deny check --config .config/deny.toml && cargo audit --deny warnings && cargo geiger
+cargo audit update && cargo deny check --config .config/deny.toml && cargo audit --deny warnings && cargo geiger
 ```
 
 ## GitHub Configuration

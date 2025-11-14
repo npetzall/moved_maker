@@ -174,11 +174,10 @@ For more detailed troubleshooting, see the [Pre-commit Hooks section in DEVELOPM
 2. **Add tests** for new functionality
 3. **Ensure all tests pass**: `cargo nextest run`
 4. **Ensure pre-commit hooks pass**: `pre-commit run --all-files`
-5. **Update CHANGELOG.md** if applicable (if the project has one)
-6. **Create a pull request** with a clear description
-7. **Wait for CI/CD checks** to pass (tests, linting, security checks)
-8. **Address review feedback** if requested
-9. **Merge using rebase or squash merge** once approved
+5. **Create a pull request** with a clear description
+6. **Wait for CI/CD checks** to pass (tests, linting, security checks)
+7. **Address review feedback** if requested
+8. **Merge using rebase or squash merge** once approved
 
 ### Pull Request Requirements
 

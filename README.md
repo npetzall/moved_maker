@@ -81,6 +81,8 @@ The module name must be a valid Terraform identifier:
 
 - **[DEVELOPMENT.md](DEVELOPMENT.md)**: Installation, usage, testing, and development workflows
 - **[TOOLING.md](TOOLING.md)**: Development tools and security tooling configuration
+- **[CONTRIBUTING.md](CONTRIBUTING.md)**: Guidelines for contributing to the project
+- **[SECURITY.md](SECURITY.md)**: Security policy and vulnerability reporting
 
 ## License
 

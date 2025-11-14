@@ -14,6 +14,8 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.90.0
 
       - name: Install security tools
         run: cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
@@ -164,6 +166,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: 1.90.0
           targets: ${{ matrix.target }}
 
       - name: Install cargo-nextest

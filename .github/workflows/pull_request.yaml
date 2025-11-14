@@ -45,6 +45,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.90.0
+          components: clippy rustfmt
 
       - name: Install cargo-nextest
         run: cargo install cargo-nextest
@@ -140,6 +141,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.90.0
+          components: clippy rustfmt
 
       - name: Install pre-commit
         run: pip install pre-commit

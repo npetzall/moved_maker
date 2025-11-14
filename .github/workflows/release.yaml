@@ -167,7 +167,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Install cargo-nextest
-        uses: taiki-e/install-action@cargo-nextest
+        run: cargo install cargo-nextest
 
       - name: Run tests
         run: cargo nextest run

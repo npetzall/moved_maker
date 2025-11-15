@@ -19,17 +19,20 @@ def check(actual; count; threshold; name):
     "❌ \(name) coverage \(actual)% is below threshold of \(threshold)%"
   end;
 
-check($line; $line_count; 80; "Line"),
-check($branch; $branch_count; 70; "Branch"),
-check($func; $func_count; 85; "Function"),
-
-# Only check thresholds for metrics that have items to cover
-(if $line_count > 0 and $line < 80 then false else true end) and
-(if $branch_count > 0 and $branch < 70 then false else true end) and
-(if $func_count > 0 and $func < 85 then false else true end) |
-if . then
-  "Coverage thresholds met. ✅"
-else
-  "Coverage thresholds not met. Failing CI.",
-  false
-end
+# Collect and output individual check results, then output final summary
+(
+  [check($line; $line_count; 80; "Line"),
+   check($branch; $branch_count; 70; "Branch"),
+   check($func; $func_count; 85; "Function")] | .[],
+  "",
+  # Check thresholds and output final summary
+  ((if $line_count > 0 and $line < 80 then false else true end) and
+   (if $branch_count > 0 and $branch < 70 then false else true end) and
+   (if $func_count > 0 and $func < 85 then false else true end) |
+   if . then
+     "✅ All coverage thresholds met."
+   else
+     "❌ Coverage thresholds not met. Failing CI.",
+     false
+   end)
+)

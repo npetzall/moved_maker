@@ -120,16 +120,13 @@ cargo install cargo-audit
 
 **Usage**:
 ```bash
-# Scan for vulnerabilities
+# Scan for vulnerabilities (automatically updates database)
 cargo audit
-
-# Update vulnerability database
-cargo audit update
 
 # Output JSON format
 cargo audit --json
 
-# Check only for critical vulnerabilities
+# Check only for critical vulnerabilities (automatically updates database)
 cargo audit --deny warnings
 ```
 
@@ -148,10 +145,7 @@ cargo audit --deny warnings
 - name: Install cargo-audit
   run: cargo install cargo-audit
 
-- name: Update vulnerability database
-  run: cargo audit update
-
-- name: Check for vulnerabilities
+- name: Check for vulnerabilities (automatically updates database)
   run: cargo audit --deny warnings
 ```
 
@@ -398,9 +392,6 @@ Add to `.github/workflows/quality.yml`:
 
       - name: Run cargo-deny checks (blocking)
         run: cargo deny check --config .config/deny.toml
-
-      - name: Update vulnerability database
-        run: cargo audit update
 
       - name: Run cargo-audit checks (blocking)
         run: cargo audit --deny warnings

@@ -98,12 +98,12 @@ jobs:
         run: cargo install cargo-llvm-cov
 
       - name: Generate coverage
-        run: cargo llvm-cov nextest --all-features --lcov --output-path lcov.info
+        run: cargo llvm-cov nextest --all-features
 
       - name: Check coverage thresholds
         run: |
-          # Generate coverage in JSON format
-          cargo llvm-cov nextest --all-features --json > coverage.json
+          # Generate JSON report from collected coverage data
+          cargo llvm-cov report --json > coverage.json
 
           # Extract percentages and check thresholds using jq script
           jq -r -e -f .config/coverage-threshold-check.jq coverage.json || exit 1

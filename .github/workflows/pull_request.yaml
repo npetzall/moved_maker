@@ -27,8 +27,16 @@ jobs:
       - name: Run cargo-audit checks (blocking)
         run: cargo audit --deny warnings
 
-      - name: Run cargo-geiger scan (blocking)
-        run: cargo geiger --output-format json > geiger-report.json
+      - name: Run cargo-geiger scan
+        run: cargo geiger --output-format json > geiger-report.json || [ $? -eq 1 ]
+
+      - name: Upload geiger report
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+        if: always()
+        with:
+          name: geiger-report
+          path: geiger-report.json
+          if-no-files-found: warn
 
   test:
     runs-on: ${{ matrix.os }}

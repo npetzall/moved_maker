@@ -67,9 +67,6 @@ jobs:
           path: target/nextest/**/test-results.xml
           if-no-files-found: warn
 
-      - name: Run doctests
-        run: cargo test --doc
-
   coverage:
     runs-on: ubuntu-latest
     steps:

@@ -159,8 +159,8 @@ jobs:
       - name: Install pre-commit
         run: pip install pre-commit
 
-      - name: Install cargo-nextest
-        run: cargo install cargo-nextest
+      - name: Install pre-commit dependencies
+        run: cargo install cargo-nextest cargo-deny cargo-audit
 
       - name: Run pre-commit
         run: pre-commit run --all-files

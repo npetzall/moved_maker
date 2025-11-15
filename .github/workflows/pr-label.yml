@@ -17,12 +17,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup GitHub CLI
-        uses: cli/cli-action@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Analyze commits and apply labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR_NUM=${{ github.event.pull_request.number }}
 

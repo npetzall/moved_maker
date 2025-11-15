@@ -23,7 +23,10 @@ jobs:
       - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1  # v2.8.1
 
       - name: Install security tools
-        run: cargo install cargo-deny cargo-audit cargo-geiger cargo-auditable
+        run: cargo install cargo-deny cargo-audit cargo-auditable
+
+      - name: Install cargo-geiger
+        run: cargo install --locked cargo-geiger
 
       - name: Run cargo-deny checks (blocking)
         run: cargo deny check --config .config/deny.toml

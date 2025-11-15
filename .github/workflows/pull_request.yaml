@@ -24,9 +24,6 @@ jobs:
       - name: Run cargo-deny checks (blocking)
         run: cargo deny check --config .config/deny.toml
 
-      - name: Update vulnerability database
-        run: cargo audit update
-
       - name: Run cargo-audit checks (blocking)
         run: cargo audit --deny warnings
 

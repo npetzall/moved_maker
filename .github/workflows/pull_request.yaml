@@ -64,7 +64,8 @@ jobs:
         if: always()
         with:
           name: test-results-${{ matrix.os }}
-          path: test-results.xml
+          path: target/nextest/**/test-results.xml
+          if-no-files-found: warn
 
       - name: Run doctests
         run: cargo test --doc

@@ -5,17 +5,7 @@ use std::process::Command;
 use tempfile::TempDir;
 
 fn get_binary_path() -> PathBuf {
-    // In integration tests, the binary is in target/debug/
-    let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    path.push("target");
-    path.push("debug");
-    path.push("move_maker");
-
-    // On Windows, add .exe extension
-    #[cfg(windows)]
-    path.set_extension("exe");
-
-    path
+    PathBuf::from(env!("CARGO_BIN_EXE_move_maker"))
 }
 
 #[test]

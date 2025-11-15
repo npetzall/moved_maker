@@ -174,21 +174,18 @@ jobs:
           path: artifacts
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          body: ${{ steps.release_notes.outputs.notes }}
-          files: |
-            artifacts/move_maker-linux-x86_64
-            artifacts/move_maker-linux-x86_64.sha256
-            artifacts/move_maker-linux-aarch64
-            artifacts/move_maker-linux-aarch64.sha256
-            artifacts/move_maker-macos-x86_64
-            artifacts/move_maker-macos-x86_64.sha256
-            artifacts/move_maker-macos-aarch64
-            artifacts/move_maker-macos-aarch64.sha256
-          draft: false
-          prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "Release ${{ github.ref_name }}" \
+            --notes-file release_notes.md \
+            --verify-tag \
+            artifacts/move_maker-linux-x86_64 \
+            artifacts/move_maker-linux-x86_64.sha256 \
+            artifacts/move_maker-linux-aarch64 \
+            artifacts/move_maker-linux-aarch64.sha256 \
+            artifacts/move_maker-macos-x86_64 \
+            artifacts/move_maker-macos-x86_64.sha256 \
+            artifacts/move_maker-macos-aarch64 \
+            artifacts/move_maker-macos-aarch64.sha256

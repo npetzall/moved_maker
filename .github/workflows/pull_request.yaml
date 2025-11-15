@@ -31,7 +31,7 @@ jobs:
         run: cargo audit --deny warnings
 
       - name: Run cargo-geiger scan
-        run: cargo geiger --output-format json > geiger-report.json || [ $? -eq 1 ]
+        run: cargo geiger --output-format Json > geiger-report.json || [ $? -eq 1 ]
 
       - name: Upload geiger report
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0

@@ -95,7 +95,7 @@ cargo install cargo-geiger
 cargo geiger
 
 # Output JSON format (for CI/CD)
-cargo geiger --output-format json > geiger-report.json
+cargo geiger --output-format Json > geiger-report.json
 
 # Exclude test dependencies
 cargo geiger --exclude-tests

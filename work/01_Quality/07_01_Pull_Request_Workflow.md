@@ -34,7 +34,7 @@ Integrate security checks, test runner, code coverage, and pre-commit hooks into
   - [ ] Add cargo-deny check step (blocking): `cargo deny check --config .config/deny.toml`
   - [ ] Add cargo-audit update step: `cargo audit update`
   - [ ] Add cargo-audit check step (blocking): `cargo audit --deny warnings`
-  - [ ] Add cargo-geiger scan step (blocking): `cargo geiger --output-format json > geiger-report.json`
+  - [ ] Add cargo-geiger scan step (blocking): `cargo geiger --output-format Json > geiger-report.json`
 - [ ] Verify workflow syntax
 - [ ] Test workflow locally (if possible) or create test PR
 - [ ] Verify all security checks run and are blocking

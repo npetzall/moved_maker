@@ -170,7 +170,7 @@ cargo install cargo-geiger
 cargo geiger
 
 # Output JSON
-cargo geiger --output-format json
+cargo geiger --output-format Json
 
 # Exclude test dependencies
 cargo geiger --exclude-tests
@@ -191,7 +191,7 @@ cargo geiger --exclude-tests
   run: cargo install cargo-geiger
 
 - name: Check unsafe code usage (blocking)
-  run: cargo geiger --output-format json > geiger-report.json
+  run: cargo geiger --output-format Json > geiger-report.json
 ```
 
 ---
@@ -397,7 +397,7 @@ Add to `.github/workflows/quality.yml`:
         run: cargo audit --deny warnings
 
       - name: Run cargo-geiger scan (blocking)
-        run: cargo geiger --output-format json > geiger-report.json
+        run: cargo geiger --output-format Json > geiger-report.json
 
       - name: Build with embedded dependency info
         run: cargo auditable build --release

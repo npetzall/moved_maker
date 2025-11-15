@@ -110,7 +110,7 @@ jobs:
         run: cargo audit --deny warnings
 
       - name: Run cargo-geiger scan (blocking)
-        run: cargo geiger --output-format json > geiger-report.json
+        run: cargo geiger --output-format Json > geiger-report.json
 
   version:
     needs: security

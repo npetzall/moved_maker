@@ -53,7 +53,7 @@ Implement comprehensive security scanning, vulnerability detection, and secure c
 - [x] Run cargo-audit scan: `cargo audit`
 - [x] Run cargo-audit with warnings as errors: `cargo audit --deny warnings`
 - [x] Run cargo-geiger scan: `cargo geiger`
-- [x] Run cargo-geiger with JSON output: `cargo geiger --output-format json > geiger-report.json`
+- [x] Run cargo-geiger with JSON output: `cargo geiger --output-format Json > geiger-report.json`
 - [x] Review all scan results
 - [x] Document any findings that need addressing
 
@@ -102,7 +102,7 @@ Implement comprehensive security scanning, vulnerability detection, and secure c
 - Binary auditing is required for all release builds
 - Security tools should be run locally before committing changes
 - **cargo-geiger blocking behavior**: cargo-geiger reports unsafe code usage but does not fail by default. In CI/CD, it's configured as blocking to ensure visibility. For local development, review the output to understand unsafe code in dependencies.
-- **cargo-geiger output format**: Use JSON output (`--output-format json`) for automated/CI runs to enable programmatic processing. Use plain output for local interactive review.
+- **cargo-geiger output format**: Use JSON output (`--output-format Json`) for automated/CI runs to enable programmatic processing. Use plain output for local interactive review.
 
 ## References
 

@@ -84,7 +84,7 @@ See VERSIONING.md for detailed versioning strategy.
           run: cargo audit --deny warnings
 
         - name: Run cargo-geiger scan (blocking)
-          run: cargo geiger --output-format json > geiger-report.json
+          run: cargo geiger --output-format Json > geiger-report.json
   ```
 - [ ] Note: Binary build and audit steps are handled in the build-and-release job (Section 4). This security job only runs source-level security checks.
 - [ ] Ensure build-and-release job depends on security job: `needs: [security]`

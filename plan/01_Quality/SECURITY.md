@@ -120,16 +120,13 @@ cargo install cargo-audit
 
 **Usage**:
 ```bash
-# Scan for vulnerabilities
+# Scan for vulnerabilities (automatically updates database)
 cargo audit
-
-# Update vulnerability database
-cargo audit update
 
 # Output JSON format
 cargo audit --json
 
-# Check only for critical vulnerabilities
+# Check only for critical vulnerabilities (automatically updates database)
 cargo audit --deny warnings
 ```
 
@@ -148,10 +145,7 @@ cargo audit --deny warnings
 - name: Install cargo-audit
   run: cargo install cargo-audit
 
-- name: Update vulnerability database
-  run: cargo audit update
-
-- name: Check for vulnerabilities
+- name: Check for vulnerabilities (automatically updates database)
   run: cargo audit --deny warnings
 ```
 
@@ -176,7 +170,7 @@ cargo install cargo-geiger
 cargo geiger
 
 # Output JSON
-cargo geiger --output-format json
+cargo geiger --output-format Json
 
 # Exclude test dependencies
 cargo geiger --exclude-tests
@@ -197,7 +191,7 @@ cargo geiger --exclude-tests
   run: cargo install cargo-geiger
 
 - name: Check unsafe code usage (blocking)
-  run: cargo geiger --output-format json > geiger-report.json
+  run: cargo geiger --output-format Json > geiger-report.json
 ```
 
 ---
@@ -399,14 +393,11 @@ Add to `.github/workflows/quality.yml`:
       - name: Run cargo-deny checks (blocking)
         run: cargo deny check --config .config/deny.toml
 
-      - name: Update vulnerability database
-        run: cargo audit update
-
       - name: Run cargo-audit checks (blocking)
         run: cargo audit --deny warnings
 
       - name: Run cargo-geiger scan (blocking)
-        run: cargo geiger --output-format json > geiger-report.json
+        run: cargo geiger --output-format Json > geiger-report.json
 
       - name: Build with embedded dependency info
         run: cargo auditable build --release

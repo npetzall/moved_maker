@@ -1,0 +1,236 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331  # master
+        with:
+          toolchain: 1.90.0
+
+      - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1  # v2.8.1
+
+      - name: Install security tools
+        run: cargo install cargo-deny cargo-audit cargo-auditable
+
+      - name: Install cargo-geiger
+        run: cargo install --locked cargo-geiger
+
+      - name: Run cargo-deny checks (blocking)
+        run: cargo deny check --config .config/deny.toml
+
+      - name: Run cargo-audit checks (blocking)
+        run: cargo audit --deny warnings
+
+      - name: Run cargo-geiger scan
+        run: cargo geiger --output-format Json > geiger-report.json || [ $? -eq 1 ]
+
+      - name: Upload geiger report
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+        if: always()
+        with:
+          name: geiger-report
+          path: geiger-report.json
+          if-no-files-found: warn
+
+  coverage:
+    needs: security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331  # master
+        with:
+          toolchain: 1.90.0
+          components: llvm-tools-preview
+
+      - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1  # v2.8.1
+        with:
+          cache-on-failure: false
+
+      - name: Install cargo-nextest
+        run: cargo install cargo-nextest
+
+      - name: Install cargo-llvm-cov
+        run: cargo install cargo-llvm-cov
+
+      - name: Generate coverage
+        run: cargo llvm-cov nextest --all-features
+
+      - name: Check coverage thresholds
+        run: |
+          # Generate JSON report from collected coverage data
+          cargo llvm-cov report --json > coverage.json
+
+          # Extract percentages and check thresholds using jq script
+          jq -r -e -f .config/coverage-threshold-check.jq coverage.json || exit 1
+
+  build-and-release:
+    needs: [security, coverage]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: move_maker-linux-x86_64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            artifact_name: move_maker-linux-aarch64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: move_maker-macos-x86_64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: move_maker-macos-aarch64
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331  # master
+        with:
+          toolchain: 1.90.0
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1  # v2.8.1
+        with:
+          cache-targets: true
+          cache-on-failure: false
+
+      - name: Install cargo-nextest
+        run: cargo install cargo-nextest
+
+      - name: Run tests
+        run: cargo nextest run
+
+      - name: Install cargo-auditable
+        run: cargo install cargo-auditable
+
+      - name: Build release binary with embedded dependency info
+        run: cargo auditable build --release --target ${{ matrix.target }}
+
+      - name: Install cargo-audit for binary auditing
+        run: cargo install cargo-audit
+
+      - name: Audit release binary
+        run: cargo audit bin target/${{ matrix.target }}/release/move_maker
+
+      - name: Strip binary (Linux/macOS)
+        if: matrix.os != 'windows'
+        run: strip target/${{ matrix.target }}/release/move_maker
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: target/${{ matrix.target }}/release/move_maker
+          retention-days: 1
+
+      - name: Create checksum
+        shell: bash
+        run: |
+          cd target/${{ matrix.target }}/release
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum move_maker > move_maker.sha256
+          else
+            shasum -a 256 move_maker > move_maker.sha256
+          fi
+          cat move_maker.sha256
+
+      - name: Upload checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}.sha256
+          path: target/${{ matrix.target }}/release/move_maker.sha256
+          retention-days: 1
+
+  release:
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          # Get commits since last tag, or complete history if no tags (first release)
+          if git describe --tags --abbrev=0 2>/dev/null; then
+            LAST_TAG=$(git describe --tags --abbrev=0)
+            NOTES=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          else
+            # First release: read complete history
+            NOTES=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          fi
+
+          if [ -z "$NOTES" ]; then
+            NOTES="- No significant changes"
+          fi
+
+          {
+            echo "## Changes"
+            echo ""
+            echo "$NOTES"
+            echo ""
+            echo "## Installation"
+            echo ""
+            echo "Download the appropriate binary for your platform:"
+            echo "- Linux (x86_64): \`move_maker-linux-x86_64\`"
+            echo "- Linux (ARM64): \`move_maker-linux-aarch64\`"
+            echo "- macOS (Intel): \`move_maker-macos-x86_64\`"
+            echo "- macOS (Apple Silicon): \`move_maker-macos-aarch64\`"
+          } > release_notes.md
+
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          cat release_notes.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "Release ${{ github.ref_name }}" \
+            --notes-file release_notes.md \
+            --verify-tag \
+            artifacts/move_maker-linux-x86_64 \
+            artifacts/move_maker-linux-x86_64.sha256 \
+            artifacts/move_maker-linux-aarch64 \
+            artifacts/move_maker-linux-aarch64.sha256 \
+            artifacts/move_maker-macos-x86_64 \
+            artifacts/move_maker-macos-x86_64.sha256 \
+            artifacts/move_maker-macos-aarch64 \
+            artifacts/move_maker-macos-aarch64.sha256

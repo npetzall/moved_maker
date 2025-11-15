@@ -95,7 +95,7 @@ cargo install cargo-geiger
 cargo geiger
 
 # Output JSON format (for CI/CD)
-cargo geiger --output-format json > geiger-report.json
+cargo geiger --output-format Json > geiger-report.json
 
 # Exclude test dependencies
 cargo geiger --exclude-tests
@@ -132,8 +132,8 @@ cargo audit bin target/release/move_maker
 To run all security checks locally:
 
 ```bash
-# Update advisory database and run all checks
-cargo audit update && cargo deny check --config .config/deny.toml && cargo audit --deny warnings && cargo geiger
+# Run all security checks (cargo audit automatically updates the database)
+cargo deny check --config .config/deny.toml && cargo audit --deny warnings && cargo geiger
 ```
 
 ### Security Tool Versions

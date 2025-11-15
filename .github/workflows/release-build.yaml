@@ -45,8 +45,45 @@ jobs:
           path: geiger-report.json
           if-no-files-found: warn
 
-  build-and-release:
+  coverage:
     needs: security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331  # master
+        with:
+          toolchain: 1.90.0
+          components: llvm-tools-preview
+
+      - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1  # v2.8.1
+        with:
+          cache-on-failure: false
+
+      - name: Install cargo-nextest
+        run: cargo install cargo-nextest
+
+      - name: Install cargo-llvm-cov
+        run: cargo install cargo-llvm-cov
+
+      - name: Generate coverage
+        run: cargo llvm-cov nextest --all-features
+
+      - name: Check coverage thresholds
+        run: |
+          # Generate JSON report from collected coverage data
+          cargo llvm-cov report --json > coverage.json
+
+          # Extract percentages and check thresholds using jq script
+          jq -r -e -f .config/coverage-threshold-check.jq coverage.json || exit 1
+
+  build-and-release:
+    needs: [security, coverage]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

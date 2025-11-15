@@ -49,16 +49,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup GitHub CLI
-        uses: cli/cli-action@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Fetch all tags
         run: git fetch --tags --force
 
       - name: Calculate version from PR labels
         id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e  # Exit on error - abort workflow if version calculation fails
 

@@ -57,7 +57,7 @@ jobs:
         run: cargo install cargo-nextest
 
       - name: Run tests
-        run: cargo nextest run --junit-xml test-results.xml
+        run: cargo nextest run
 
       - name: Upload test results
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0

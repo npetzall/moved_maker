@@ -9,7 +9,7 @@ jobs:
   version:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       pull-requests: read
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -36,84 +36,17 @@ jobs:
       - name: Fetch all tags
         run: git fetch --tags --force
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@486d0b887200c1d9bb3a30439404f78461090c4f  # v5
+
       - name: Calculate version from PR labels
         id: version
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          set -e  # Exit on error - abort workflow if version calculation fails
-
-          # Get latest tag matching v* pattern
-          LATEST_TAG=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "")
-
-          if [ -z "$LATEST_TAG" ]; then
-            # No tag found (first release), use base version from Cargo.toml
-            BASE_VERSION=$(grep '^version = ' Cargo.toml | cut -d '"' -f 2)
-            if [ -z "$BASE_VERSION" ]; then
-              echo "Error: No version found in Cargo.toml and no previous tags exist"
-              exit 1
-            fi
-            VERSION="$BASE_VERSION"
-            echo "No previous tag found (first release), using base version from Cargo.toml: $VERSION"
-          else
-            # Extract version from tag (remove 'v' prefix)
-            BASE_VERSION="${LATEST_TAG#v}"
-
-            # Parse version components
-            IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
-
-            # Get merged PRs since last tag
-            TAG_DATE=$(git log -1 --format=%ct ${LATEST_TAG})
-            PRS=$(gh pr list --state merged --base main --json number,labels,mergedAt --limit 100)
-
-            MAJOR_BUMP=false
-            MINOR_BUMP=false
-
-            # Check labels on merged PRs (labels are source of truth, already auto-applied)
-            for PR_NUM in $(echo "$PRS" | jq -r '.[] | select(.mergedAt != null) | select((.mergedAt | fromdateiso8601) > '$TAG_DATE') | .number'); do
-              LABELS=$(gh pr view $PR_NUM --json labels --jq '.labels[].name' | tr '\n' ' ')
-
-              if echo "$LABELS" | grep -qE "(version: major|breaking)"; then
-                MAJOR_BUMP=true
-                echo "PR #$PR_NUM has major version label"
-              elif echo "$LABELS" | grep -qE "(version: minor|feature)"; then
-                MINOR_BUMP=true
-                echo "PR #$PR_NUM has minor version label"
-              fi
-              # No label = patch bump (handled below)
-            done
-
-            # Calculate version based on highest bump type found
-            if [ "$MAJOR_BUMP" = true ]; then
-              MAJOR=$((MAJOR + 1))
-              MINOR=0
-              PATCH=0
-              BUMP_TYPE="MAJOR"
-            elif [ "$MINOR_BUMP" = true ]; then
-              MINOR=$((MINOR + 1))
-              PATCH=0
-              BUMP_TYPE="MINOR"
-            else
-              # PATCH bump by commit count
-              COMMIT_COUNT=$(git rev-list --count ${LATEST_TAG}..HEAD)
-              PATCH=$((PATCH + COMMIT_COUNT))
-              BUMP_TYPE="PATCH"
-            fi
-
-            VERSION="${MAJOR}.${MINOR}.${PATCH}"
-
-            echo "Latest tag: $LATEST_TAG"
-            echo "Bump type: $BUMP_TYPE"
-            echo "Calculated version: $VERSION"
-          fi
-
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "tag_name=v$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Update Cargo.toml version
-        run: |
-          sed -i "s/^version = \".*\"/version = \"${{ steps.version.outputs.version }}\"/" Cargo.toml
-          echo "Updated Cargo.toml version to ${{ steps.version.outputs.version }}"
+          cd .github/scripts/release-version
+          uv run python -m release_version
 
       - name: Commit and push version update
         run: |

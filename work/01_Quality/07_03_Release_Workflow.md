@@ -22,8 +22,29 @@ Automate the release process so that each push to the `main` branch creates a ne
 - **Trigger**: Push to `main` branch
 
 ## Required Permissions
-- `contents: write` - To create releases, tags, and update Cargo.toml
+
+### Release Version Workflow (`.github/workflows/release-version.yaml`)
+
+The version calculation workflow uses minimal permissions following the principle of least privilege:
+
+- `contents: read` - To read repository information via GitHub API (for `get_repo()`)
 - `pull-requests: read` - To read PR labels for version calculation
+
+**Note**: The workflow does NOT need `contents: write` permission because:
+- The Python script only reads PR information and repository metadata
+- File operations (reading/writing `Cargo.toml`) are local to the runner filesystem
+- Git push operations use the GitHub App token (which has write permissions), not `GITHUB_TOKEN`
+- The GitHub App token is used for checkout and all git operations that require write access
+
+This separation provides better security:
+- `GITHUB_TOKEN` has minimal permissions (read-only)
+- Write operations use the GitHub App token with explicit write permissions
+- Reduces risk if `GITHUB_TOKEN` is accidentally exposed
+
+### Release Build Workflow (`.github/workflows/release-build.yaml`)
+
+- `contents: write` - To create releases, tags, and upload artifacts
+- `pull-requests: read` - To read PR labels (if needed for release notes)
 
 ## Release Platforms
 

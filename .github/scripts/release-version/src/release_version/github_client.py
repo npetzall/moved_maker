@@ -2,7 +2,7 @@
 import sys
 from typing import List, Optional
 
-from github import Github, GithubException
+from github import Auth, Github, GithubException
 from github.PullRequest import PullRequest
 from github.Repository import Repository
 
@@ -17,7 +17,7 @@ class GitHubClient:
             token: GitHub personal access token or app token
             repo_name: Repository name in format "owner/repo"
         """
-        self.github = Github(token)
+        self.github = Github(auth=Auth.Token(token))
         self.repo_name = repo_name
         self._repo: Optional[Repository] = None
 

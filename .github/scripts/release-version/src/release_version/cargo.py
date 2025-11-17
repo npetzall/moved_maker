@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 import tomlkit
+from packaging.version import InvalidVersion, Version
 
 
 def read_cargo_version(path: str = "Cargo.toml") -> str:
@@ -13,11 +14,11 @@ def read_cargo_version(path: str = "Cargo.toml") -> str:
         path: Path to Cargo.toml file
 
     Returns:
-        Version string from package.version
+        Version string from package.version (validated as semantic version)
 
     Raises:
         FileNotFoundError: If Cargo.toml doesn't exist
-        ValueError: If version field is missing or invalid
+        ValueError: If version field is missing, empty, or invalid format
     """
     try:
         cargo_path = Path(path)
@@ -36,6 +37,22 @@ def read_cargo_version(path: str = "Cargo.toml") -> str:
         version = str(cargo["package"]["version"])
         if not version:
             raise ValueError("Version field is empty")
+
+        # Reject versions with 'v' prefix (not standard for Cargo.toml)
+        if version.startswith("v") or version.startswith("V"):
+            raise ValueError(
+                f"Invalid version format in Cargo.toml: {version}. "
+                "Version should not include 'v' prefix. Expected semantic version (e.g., 1.0.0)"
+            )
+
+        # Validate version format
+        try:
+            Version(version)  # Raises InvalidVersion if invalid
+        except InvalidVersion as e:
+            raise ValueError(
+                f"Invalid version format in Cargo.toml: {version}. "
+                "Expected semantic version (e.g., 1.0.0)"
+            ) from e
 
         return version
     except tomlkit.exceptions.TOMLKitError as e:

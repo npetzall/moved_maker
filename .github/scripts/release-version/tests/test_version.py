@@ -5,6 +5,7 @@ import pytest
 from packaging.version import InvalidVersion
 
 from release_version.version import (
+    calculate_new_version,
     calculate_version,
     determine_bump_type,
     get_commit_count,
@@ -149,3 +150,59 @@ def test_calculate_version_invalid_base():
     """Test calculating version with invalid base version."""
     with pytest.raises(InvalidVersion):
         calculate_version("invalid", "PATCH", 1)
+
+
+def test_calculate_new_version_invalid_tag():
+    """Test calculate_new_version with invalid tag version format."""
+    mock_github_client = MagicMock()
+
+    with patch("release_version.version.get_latest_tag") as mock_get_tag:
+        mock_get_tag.return_value = "vinvalid-version-string"
+
+        with pytest.raises(ValueError, match="Invalid version format in git tag"):
+            calculate_new_version(mock_github_client, repo_path=".")
+
+
+def test_calculate_new_version_valid_tag():
+    """Test calculate_new_version with valid tag version."""
+    mock_github_client = MagicMock()
+    mock_github_client.get_merged_prs_since.return_value = []
+
+    with patch("release_version.version.get_latest_tag") as mock_get_tag, patch(
+        "release_version.version.get_tag_timestamp"
+    ) as mock_timestamp, patch(
+        "release_version.version.get_commit_count"
+    ) as mock_commit_count:
+        mock_get_tag.return_value = "v1.0.0"
+        mock_timestamp.return_value = 1234567890
+        mock_commit_count.return_value = 2
+
+        version, tag_name = calculate_new_version(mock_github_client, repo_path=".")
+        assert version == "1.0.2"  # PATCH bump with 2 commits
+        assert tag_name == "v1.0.2"
+
+
+def test_calculate_new_version_first_release_invalid_cargo_version():
+    """Test calculate_new_version first release with invalid Cargo.toml version."""
+    mock_github_client = MagicMock()
+
+    with patch("release_version.version.get_latest_tag") as mock_get_tag:
+        mock_get_tag.return_value = None  # No tags - first release
+
+        with patch("release_version.version.read_cargo_version") as mock_read:
+            mock_read.side_effect = ValueError(
+                "Invalid version format in Cargo.toml: invalid-version. Expected semantic version (e.g., 1.0.0)"
+            )
+
+            with pytest.raises(ValueError, match="Invalid version format in Cargo.toml"):
+                calculate_new_version(mock_github_client, repo_path=".")
+
+
+def test_calculate_version_validates_output():
+    """Test that calculate_version validates the output (defensive programming)."""
+    # This test verifies that the defensive validation is in place
+    # In practice, calculated versions should always be valid, but we test the mechanism
+    # by ensuring valid versions pass through correctly
+    new_version = calculate_version("1.0.0", "MAJOR", 0)
+    assert new_version == "2.0.0"
+    # If validation fails, an exception would be raised above

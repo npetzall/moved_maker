@@ -51,6 +51,37 @@ def test_read_cargo_version_invalid_toml():
             temp_path.unlink()
 
 
+def test_read_cargo_version_invalid_format(datadir):
+    """Test reading Cargo.toml with invalid version format."""
+    cargo_toml = datadir / "invalid_format.toml"
+    with pytest.raises(ValueError, match="Invalid version format in Cargo.toml"):
+        read_cargo_version(str(cargo_toml))
+
+
+def test_read_cargo_version_with_v_prefix(datadir):
+    """Test reading Cargo.toml with version containing 'v' prefix (should be rejected)."""
+    cargo_toml = datadir / "with_v_prefix.toml"
+    with pytest.raises(
+        ValueError,
+        match="Version should not include 'v' prefix",
+    ):
+        read_cargo_version(str(cargo_toml))
+
+
+def test_read_cargo_version_prerelease(datadir):
+    """Test reading Cargo.toml with valid pre-release version."""
+    cargo_toml = datadir / "prerelease.toml"
+    version = read_cargo_version(str(cargo_toml))
+    assert version == "1.0.0-alpha"
+
+
+def test_read_cargo_version_build_metadata(datadir):
+    """Test reading Cargo.toml with valid build metadata version."""
+    cargo_toml = datadir / "build_metadata.toml"
+    version = read_cargo_version(str(cargo_toml))
+    assert version == "1.0.0+build.1"
+
+
 def test_update_cargo_version_valid(temp_cargo_toml):
     """Test updating version in valid Cargo.toml."""
     new_version = "2.0.0"

@@ -9,6 +9,12 @@ jobs:
   version:
     runs-on: ubuntu-latest
     permissions:
+      # Note: contents: read is intentional. The workflow uses a GitHub App token
+      # (via actions/create-github-app-token) for all write operations (checkout,
+      # commit, push, tag). The default GITHUB_TOKEN has contents: read only due to
+      # branch protection rules that prevent github-actions[bot] from writing directly
+      # to protected branches. The App token bypasses these restrictions and is used
+      # for the checkout step and all git operations requiring write access.
       contents: read
       pull-requests: read
     outputs:
@@ -44,6 +50,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
+          CARGO_TOML_PATH: ${{ github.workspace }}/Cargo.toml
         run: |
           cd .github/scripts/release-version
           uv run python -m release_version

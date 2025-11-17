@@ -28,16 +28,20 @@ def main() -> None:
         print(f"Error initializing GitHub client: {e}", file=sys.stderr)
         sys.exit(1)
 
-    # Calculate new version
+    # Get Cargo.toml path from environment or default
+    cargo_toml_path = os.environ.get("CARGO_TOML_PATH", "Cargo.toml")
+    repo_root = os.path.dirname(cargo_toml_path) or "."
+
+    # Calculate new version (pass repo_root for reading current version)
     try:
-        version, tag_name = calculate_new_version(github_client)
+        version, tag_name = calculate_new_version(github_client, repo_path=repo_root)
     except Exception as e:
         print(f"Error calculating version: {e}", file=sys.stderr)
         sys.exit(1)
 
-    # Update Cargo.toml
+    # Update Cargo.toml (use full path)
     try:
-        update_cargo_version("Cargo.toml", version)
+        update_cargo_version(cargo_toml_path, version)
     except Exception as e:
         print(f"Error updating Cargo.toml: {e}", file=sys.stderr)
         sys.exit(1)

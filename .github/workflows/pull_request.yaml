@@ -100,6 +100,14 @@ jobs:
       - name: Generate coverage
         run: cargo llvm-cov nextest --all-features
 
+      - name: Check jq availability
+        run: |
+          if ! command -v jq &> /dev/null; then
+            echo "::error::jq is not installed. Required for coverage threshold checking."
+            exit 1
+          fi
+          echo "✅ jq is available: $(jq --version)"
+
       - name: Check coverage thresholds
         run: |
           # Generate JSON report from collected coverage data

@@ -13,7 +13,6 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
         with:
           ref: ${{ github.ref }}
-          fetch-depth: 0
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331  # master
@@ -53,7 +52,6 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
         with:
           ref: ${{ github.ref }}
-          fetch-depth: 0
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331  # master
@@ -107,7 +105,6 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
         with:
           ref: ${{ github.ref }}
-          fetch-depth: 0
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331  # master
@@ -177,7 +174,7 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
         with:
           ref: ${{ github.ref }}
-          fetch-depth: 0
+          fetch-depth: 0  # Required for git describe and git log
 
       - name: Generate release notes
         id: release_notes

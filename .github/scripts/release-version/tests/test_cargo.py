@@ -54,11 +54,13 @@ def test_read_cargo_version_invalid_toml():
 def test_update_cargo_version_valid(temp_cargo_toml):
     """Test updating version in valid Cargo.toml."""
     new_version = "2.0.0"
-    update_cargo_version(str(temp_cargo_toml), new_version)
+    result = update_cargo_version(str(temp_cargo_toml), new_version)
 
     # Verify update
     updated_version = read_cargo_version(str(temp_cargo_toml))
     assert updated_version == new_version
+    # Verify return value is True when version changes
+    assert result is True
 
 
 def test_update_cargo_version_preserves_formatting(sample_cargo_toml_with_deps):
@@ -66,11 +68,13 @@ def test_update_cargo_version_preserves_formatting(sample_cargo_toml_with_deps):
     original_content = sample_cargo_toml_with_deps.read_text()
     new_version = "3.0.0"
 
-    update_cargo_version(str(sample_cargo_toml_with_deps), new_version)
+    result = update_cargo_version(str(sample_cargo_toml_with_deps), new_version)
 
     # Verify version was updated
     updated_version = read_cargo_version(str(sample_cargo_toml_with_deps))
     assert updated_version == new_version
+    # Verify return value is True when version changes
+    assert result is True
 
     # Verify dependencies section still exists
     updated_content = sample_cargo_toml_with_deps.read_text()
@@ -88,3 +92,21 @@ def test_update_cargo_version_empty_version(temp_cargo_toml):
     """Test updating with empty version."""
     with pytest.raises(ValueError, match="Version cannot be empty"):
         update_cargo_version(str(temp_cargo_toml), "")
+
+
+def test_update_cargo_version_unchanged(temp_cargo_toml):
+    """Test updating with same version (should return False)."""
+    current_version = read_cargo_version(str(temp_cargo_toml))
+    original_content = temp_cargo_toml.read_text()
+
+    # Try to update with the same version
+    result = update_cargo_version(str(temp_cargo_toml), current_version)
+
+    # Verify return value is False when version unchanged
+    assert result is False
+
+    # Verify file was not modified
+    assert temp_cargo_toml.read_text() == original_content
+
+    # Verify version is still the same
+    assert read_cargo_version(str(temp_cargo_toml)) == current_version

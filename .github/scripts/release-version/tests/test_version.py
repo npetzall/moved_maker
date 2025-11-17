@@ -54,13 +54,21 @@ def test_get_tag_timestamp_invalid():
 
 
 def test_get_commit_count():
-    """Test getting commit count."""
+    """Test getting commit count with path filtering."""
     with patch("subprocess.run") as mock_run:
         mock_run.return_value.returncode = 0
         mock_run.return_value.stdout = "5\n"
 
         count = get_commit_count("v1.0.0")
         assert count == 5
+
+        # Verify path filtering is included in the command
+        mock_run.assert_called_once()
+        call_args = mock_run.call_args[0][0]
+        assert "--" in call_args
+        assert "src/" in call_args
+        assert "Cargo.toml" in call_args
+        assert "Cargo.lock" in call_args
 
 
 def test_determine_bump_type_major():

@@ -59,20 +59,33 @@ def get_tag_timestamp(tag: str) -> int:
 
 
 def get_commit_count(since_tag: str) -> int:
-    """Get commit count since a tag.
+    """Get commit count since a tag for application-related files only.
+
+    Only counts commits that modify files in src/, Cargo.toml, or Cargo.lock.
+    Commits that only modify other files (documentation, workflows, scripts, etc.)
+    are excluded from the count.
 
     Args:
         since_tag: Git tag to count commits from
 
     Returns:
-        Number of commits since the tag
+        Number of commits since the tag that modify application code or dependencies
 
     Raises:
         ValueError: If tag doesn't exist
     """
     try:
         result = subprocess.run(
-            ["git", "rev-list", "--count", f"{since_tag}..HEAD"],
+            [
+                "git",
+                "rev-list",
+                "--count",
+                f"{since_tag}..HEAD",
+                "--",
+                "src/",
+                "Cargo.toml",
+                "Cargo.lock",
+            ],
             capture_output=True,
             text=True,
             check=True,

@@ -43,12 +43,18 @@ def read_cargo_version(path: str = "Cargo.toml") -> str:
         raise ValueError(f"Invalid TOML format: {e}") from e
 
 
-def update_cargo_version(path: str = "Cargo.toml", version: str = "") -> None:
+def update_cargo_version(path: str = "Cargo.toml", version: str = "") -> bool:
     """Update version in Cargo.toml.
+
+    Only writes the file if the version is different from the current version.
+    This prevents unnecessary file modifications when the version hasn't changed.
 
     Args:
         path: Path to Cargo.toml file
         version: New version string to set
+
+    Returns:
+        True if version was updated, False if version was unchanged
 
     Raises:
         FileNotFoundError: If Cargo.toml doesn't exist
@@ -61,6 +67,14 @@ def update_cargo_version(path: str = "Cargo.toml", version: str = "") -> None:
 
         if not version:
             raise ValueError("Version cannot be empty")
+
+        # Read current version first
+        current_version = read_cargo_version(path)
+
+        # Check if version is different
+        if current_version == version:
+            print(f"Cargo.toml version is already {version}, no update needed")
+            return False
 
         # Read current file
         with open(cargo_path, "r", encoding="utf-8") as f:
@@ -83,7 +97,8 @@ def update_cargo_version(path: str = "Cargo.toml", version: str = "") -> None:
                 f"Version update failed: expected {version}, got {updated_version}"
             )
 
-        print(f"Updated Cargo.toml version to {version}")
+        print(f"Updated Cargo.toml version from {current_version} to {version}")
+        return True
     except tomlkit.exceptions.TOMLKitError as e:
         print(f"Error parsing Cargo.toml: {e}", file=sys.stderr)
         raise ValueError(f"Invalid TOML format: {e}") from e

@@ -41,10 +41,15 @@ def main() -> None:
 
     # Update Cargo.toml (use full path)
     try:
-        update_cargo_version(cargo_toml_path, version)
+        version_updated = update_cargo_version(cargo_toml_path, version)
     except Exception as e:
         print(f"Error updating Cargo.toml: {e}", file=sys.stderr)
         sys.exit(1)
+
+    # Only output to GITHUB_OUTPUT/console if version was updated
+    if not version_updated:
+        print("Version unchanged, skipping output")
+        sys.exit(0)
 
     # Output to GITHUB_OUTPUT
     output_file = os.environ.get("GITHUB_OUTPUT")

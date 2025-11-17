@@ -15,6 +15,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
 
+      - name: Check gh CLI availability
+        run: |
+          if ! command -v gh &> /dev/null; then
+            echo "::error::GitHub CLI (gh) is not installed. Required for PR label management."
+            exit 1
+          fi
+          echo "✅ GitHub CLI is available: $(gh --version | head -n 1)"
+
       - name: Analyze commits and apply labels
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

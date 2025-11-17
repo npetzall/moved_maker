@@ -72,6 +72,14 @@ jobs:
       - name: Generate coverage
         run: cargo llvm-cov nextest --all-features
 
+      - name: Check jq availability
+        run: |
+          if ! command -v jq &> /dev/null; then
+            echo "::error::jq is not installed. Required for coverage threshold checking."
+            exit 1
+          fi
+          echo "✅ jq is available: $(jq --version)"
+
       - name: Check coverage thresholds
         run: |
           # Generate JSON report from collected coverage data
@@ -212,6 +220,14 @@ jobs:
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
           path: artifacts
+
+      - name: Check gh CLI availability
+        run: |
+          if ! command -v gh &> /dev/null; then
+            echo "::error::GitHub CLI (gh) is not installed. Required for creating releases."
+            exit 1
+          fi
+          echo "✅ GitHub CLI is available: $(gh --version | head -n 1)"
 
       - name: Create GitHub Release
         env:

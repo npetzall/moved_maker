@@ -55,13 +55,22 @@ jobs:
           cd .github/scripts/release-version
           uv run python -m release_version
 
-      - name: Commit and push version update
+      - name: Check if version changed
+        id: version-changed
+        run: |
+          if git diff --quiet Cargo.toml; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No version changes detected, skipping commit and tag"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Version changes detected, will commit and tag"
+          fi
+
+      - name: Commit, push, and tag version update
+        if: steps.version-changed.outputs.changed == 'true'
         run: |
           git add Cargo.toml
           git commit -m "chore: bump version to ${{ steps.version.outputs.version }}"
           git push origin HEAD:main
-
-      - name: Create and push git tag
-        run: |
           git tag -a "${{ steps.version.outputs.tag_name }}" -m "Release ${{ steps.version.outputs.tag_name }}"
           git push origin "${{ steps.version.outputs.tag_name }}"

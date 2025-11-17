@@ -4,7 +4,7 @@ import sys
 from typing import Optional, Tuple
 
 from packaging import version as packaging_version
-from packaging.version import InvalidVersion
+from packaging.version import InvalidVersion, Version
 
 from release_version.cargo import read_cargo_version
 
@@ -139,21 +139,32 @@ def calculate_version(
         commit_count: Number of commits for patch bump
 
     Returns:
-        New version string
+        New version string (validated as semantic version)
 
     Raises:
-        InvalidVersion: If base_version is not a valid version
+        InvalidVersion: If base_version is not a valid version, or if calculated version is invalid (should not happen)
     """
     try:
         parsed_version = packaging_version.parse(base_version)
         major, minor, patch = parsed_version.release[:3]
 
         if bump_type == "MAJOR":
-            return f"{major + 1}.0.0"
+            new_version = f"{major + 1}.0.0"
         elif bump_type == "MINOR":
-            return f"{major}.{minor + 1}.0"
+            new_version = f"{major}.{minor + 1}.0"
         else:  # PATCH
-            return f"{major}.{minor}.{patch + commit_count}"
+            new_version = f"{major}.{minor}.{patch + commit_count}"
+
+        # Validate calculated version (defensive programming)
+        try:
+            Version(new_version)
+        except InvalidVersion as e:
+            raise InvalidVersion(
+                f"Calculated invalid version: {new_version}. "
+                "This should not happen - please report this bug."
+            ) from e
+
+        return new_version
     except (InvalidVersion, ValueError, IndexError) as e:
         print(f"Error calculating version: {e}", file=sys.stderr)
         raise InvalidVersion(f"Invalid base version: {base_version}") from e
@@ -172,7 +183,7 @@ def calculate_new_version(
         Tuple of (version, tag_name) where tag_name includes 'v' prefix
 
     Raises:
-        ValueError: If version calculation fails
+        ValueError: If version calculation fails, or if tag version format is invalid
     """
     latest_tag = get_latest_tag()
 
@@ -187,6 +198,15 @@ def calculate_new_version(
 
     # Extract version from tag (remove 'v' prefix)
     base_version = latest_tag.lstrip("v")
+
+    # Validate tag version format immediately
+    try:
+        Version(base_version)  # Raises InvalidVersion if invalid
+    except InvalidVersion as e:
+        raise ValueError(
+            f"Invalid version format in git tag '{latest_tag}': {base_version}. "
+            "Expected semantic version (e.g., 1.0.0)"
+        ) from e
 
     # Get tag timestamp
     tag_timestamp = get_tag_timestamp(latest_tag)

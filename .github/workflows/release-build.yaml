@@ -137,32 +137,32 @@ jobs:
       - name: Build release binary with embedded dependency info
         run: cargo auditable build --release --target ${{ matrix.target }}
 
+      - name: Rename binary for platform-specific release
+        run: |
+          mv target/${{ matrix.target }}/release/move_maker \
+             target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+
       - name: Install cargo-audit for binary auditing
         run: cargo install cargo-audit
 
       - name: Audit release binary
-        run: cargo audit bin target/${{ matrix.target }}/release/move_maker
+        run: cargo audit bin target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
 
       # Stripping handled by Cargo.toml [profile.release] strip = "debuginfo"
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
-        with:
-          name: ${{ matrix.artifact_name }}
-          path: target/${{ matrix.target }}/release/move_maker
-          retention-days: 1
 
       - name: Create checksum
         run: |
           python3 .github/scripts/create-checksum.py \
-            target/${{ matrix.target }}/release/move_maker \
-            target/${{ matrix.target }}/release/move_maker.sha256
+            target/${{ matrix.target }}/release/${{ matrix.artifact_name }} \
+            target/${{ matrix.target }}/release/${{ matrix.artifact_name }}.sha256
 
-      - name: Upload checksum
-        uses: actions/upload-artifact@30a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+      - name: Upload artifact (binary and checksum)
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:
-          name: ${{ matrix.artifact_name }}.sha256
-          path: target/${{ matrix.target }}/release/move_maker.sha256
+          name: ${{ matrix.artifact_name }}
+          path: |
+            target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+            target/${{ matrix.target }}/release/${{ matrix.artifact_name }}.sha256
           retention-days: 1
 
   release:
@@ -215,6 +215,7 @@ jobs:
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0
         with:
           path: artifacts
+          merge-multiple: true
 
       - name: Check gh CLI availability
         run: |
@@ -232,11 +233,4 @@ jobs:
             --title "Release ${{ github.ref_name }}" \
             --notes-file release_notes.md \
             --verify-tag \
-            artifacts/move_maker-linux-x86_64 \
-            artifacts/move_maker-linux-x86_64.sha256 \
-            artifacts/move_maker-linux-aarch64 \
-            artifacts/move_maker-linux-aarch64.sha256 \
-            artifacts/move_maker-macos-x86_64 \
-            artifacts/move_maker-macos-x86_64.sha256 \
-            artifacts/move_maker-macos-aarch64 \
-            artifacts/move_maker-macos-aarch64.sha256
+            artifacts/*

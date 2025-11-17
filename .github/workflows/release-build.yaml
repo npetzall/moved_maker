@@ -175,41 +175,20 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
         with:
           ref: ${{ github.ref }}
-          fetch-depth: 0  # Required for git describe and git log
+          fetch-depth: 0  # Full history needed for git rev-list path filtering
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@486d0b887200c1d9bb3a30439404f78461090c4f  # v5
 
       - name: Generate release notes
         id: release_notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
         run: |
-          # Get commits since last tag, or complete history if no tags (first release)
-          if git describe --tags --abbrev=0 2>/dev/null; then
-            LAST_TAG=$(git describe --tags --abbrev=0)
-            NOTES=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
-          else
-            # First release: read complete history
-            NOTES=$(git log --pretty=format:"- %s (%h)" --no-merges)
-          fi
-
-          if [ -z "$NOTES" ]; then
-            NOTES="- No significant changes"
-          fi
-
-          {
-            echo "## Changes"
-            echo ""
-            echo "$NOTES"
-            echo ""
-            echo "## Installation"
-            echo ""
-            echo "Download the appropriate binary for your platform:"
-            echo "- Linux (x86_64): \`move_maker-linux-x86_64\`"
-            echo "- Linux (ARM64): \`move_maker-linux-aarch64\`"
-            echo "- macOS (Intel): \`move_maker-macos-x86_64\`"
-            echo "- macOS (Apple Silicon): \`move_maker-macos-aarch64\`"
-          } > release_notes.md
-
-          echo "notes<<EOF" >> $GITHUB_OUTPUT
-          cat release_notes.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          cd .github/scripts/release-notes
+          uv run python -m release_notes
 
       - name: Download all artifacts
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53  # v6.0.0

@@ -161,7 +161,7 @@ jobs:
           cat move_maker.sha256
 
       - name: Upload checksum
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@30a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:
           name: ${{ matrix.artifact_name }}.sha256
           path: target/${{ matrix.target }}/release/move_maker.sha256

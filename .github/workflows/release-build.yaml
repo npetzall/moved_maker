@@ -135,9 +135,7 @@ jobs:
       - name: Audit release binary
         run: cargo audit bin target/${{ matrix.target }}/release/move_maker
 
-      - name: Strip binary (Linux/macOS)
-        if: matrix.os != 'windows'
-        run: strip target/${{ matrix.target }}/release/move_maker
+      # Stripping handled by Cargo.toml [profile.release] strip = "debuginfo"
 
       - name: Upload artifact
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0

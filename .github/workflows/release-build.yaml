@@ -133,6 +133,22 @@ jobs:
       - name: Run tests
         run: cargo nextest run
 
+      - name: Rename test results to avoid conflicts
+        run: |
+          TEST_RESULTS=$(find target/nextest -name "test-results.xml" | head -n 1)
+          if [ -n "$TEST_RESULTS" ]; then
+            mv "$TEST_RESULTS" target/nextest/${{ matrix.artifact_name }}-test.xml
+          fi
+        if: always()
+
+      - name: Upload test results
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+        if: always()
+        with:
+          name: test-results-${{ matrix.os }}-${{ matrix.target }}
+          path: target/nextest/${{ matrix.artifact_name }}-test.xml
+          if-no-files-found: warn
+
       - name: Install cargo-auditable
         run: cargo install cargo-auditable
 

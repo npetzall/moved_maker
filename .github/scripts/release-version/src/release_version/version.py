@@ -107,7 +107,7 @@ def get_commit_count(since_tag: Optional[str] = None) -> int:
             raise ValueError(f"Tag {since_tag} not found") from e
         else:
             print(f"Error getting commit count: {e}", file=sys.stderr)
-            return 0
+            raise ValueError("Failed to count commits") from e
     except ValueError as e:
         print(f"Error parsing commit count: {e}", file=sys.stderr)
         raise

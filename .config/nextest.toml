@@ -1,2 +1,2 @@
 [profile.default.junit]
-path = "test-results.xml"
+path = "{target}-test-results.xml"

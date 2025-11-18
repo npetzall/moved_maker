@@ -9,6 +9,8 @@ from release_version.version import calculate_new_version
 
 def main() -> None:
     """Main execution logic."""
+    print("Starting version calculation...")
+
     # Get GitHub token from environment (GITHUB_TOKEN is automatically available in GitHub Actions)
     token = os.environ.get("GITHUB_TOKEN")
     if not token:
@@ -24,6 +26,7 @@ def main() -> None:
     # Initialize GitHub client
     try:
         github_client = GitHubClient(token, repo_name)
+        print(f"GitHub client initialized for repository: {repo_name}")
     except Exception as e:
         print(f"Error initializing GitHub client: {e}", file=sys.stderr)
         sys.exit(1)
@@ -34,6 +37,7 @@ def main() -> None:
 
     # Calculate new version (pass repo_root for reading current version)
     try:
+        print("Calculating new version...")
         version, tag_name = calculate_new_version(github_client, repo_path=repo_root)
     except Exception as e:
         print(f"Error calculating version: {e}", file=sys.stderr)
@@ -41,7 +45,12 @@ def main() -> None:
 
     # Update Cargo.toml (use full path)
     try:
+        print(f"Updating Cargo.toml with version {version}...")
         version_updated = update_cargo_version(cargo_toml_path, version)
+        if version_updated:
+            print(f"✓ Cargo.toml updated to version {version}")
+        else:
+            print(f"ℹ Cargo.toml already at version {version}, no update needed")
     except Exception as e:
         print(f"Error updating Cargo.toml: {e}", file=sys.stderr)
         sys.exit(1)

@@ -42,7 +42,7 @@ class GitHubClient:
         """Get all merged PRs since the given timestamp.
 
         Args:
-            since_timestamp: Unix timestamp to filter PRs
+            since_timestamp: Unix timestamp to filter PRs. Use 0 to get all PRs.
 
         Returns:
             List of merged PullRequest objects
@@ -51,6 +51,11 @@ class GitHubClient:
             GithubException: If API call fails
         """
         try:
+            if since_timestamp == 0:
+                print("Fetching all merged PRs from repository...")
+            else:
+                print(f"Fetching merged PRs since timestamp {since_timestamp}...")
+
             repo = self.get_repo()
             prs = []
 
@@ -59,14 +64,20 @@ class GitHubClient:
             for pr in repo.get_pulls(
                 state="closed", base="main", sort="updated", direction="desc"
             ):
-                # Stop if we've gone past the tag date (PRs are sorted by updated_at)
-                if pr.updated_at and pr.updated_at.timestamp() < since_timestamp:
-                    break
+                # If since_timestamp is 0, get all merged PRs
+                if since_timestamp == 0:
+                    if pr.merged_at:
+                        prs.append(pr)
+                else:
+                    # Stop if we've gone past the tag date (PRs are sorted by updated_at)
+                    if pr.updated_at and pr.updated_at.timestamp() < since_timestamp:
+                        break
 
-                # Only include merged PRs after the tag date
-                if pr.merged_at and pr.merged_at.timestamp() > since_timestamp:
-                    prs.append(pr)
+                    # Only include merged PRs after the tag date
+                    if pr.merged_at and pr.merged_at.timestamp() > since_timestamp:
+                        prs.append(pr)
 
+            print(f"Found {len(prs)} merged PR(s) to analyze")
             return prs
         except GithubException as e:
             print(f"Error getting merged PRs: {e}", file=sys.stderr)

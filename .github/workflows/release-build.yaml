@@ -33,6 +33,8 @@ jobs:
       - name: Run cargo-audit checks (blocking)
         run: cargo audit --deny warnings
 
+      # Note: cargo-geiger is not blocking - exit code 1 means unsafe code was found (informational)
+      # See bugs/01_Quality/done/WORKFLOWS_GEIGER_BLOCKING.md for details
       - name: Run cargo-geiger scan
         run: cargo geiger --output-format Json > geiger-report.json || [ $? -eq 1 ]
 

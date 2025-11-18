@@ -1,6 +1,9 @@
 """Entry point for release-version package."""
 import os
+import subprocess
 import sys
+
+import tomlkit
 
 from release_version.cargo import update_cargo_version
 from release_version.github_client import GitHubClient
@@ -49,6 +52,33 @@ def main() -> None:
         version_updated = update_cargo_version(cargo_toml_path, version)
         if version_updated:
             print(f"✓ Cargo.toml updated to version {version}")
+
+            # Update Cargo.lock with the new version
+            # Read package name from Cargo.toml
+            try:
+                with open(cargo_toml_path, "r", encoding="utf-8") as f:
+                    cargo = tomlkit.parse(f.read())
+                package_name = cargo.get("package", {}).get("name", "move_maker")
+            except Exception as e:
+                print(f"Warning: Could not read package name from Cargo.toml: {e}", file=sys.stderr)
+                print("Using default package name: move_maker", file=sys.stderr)
+                package_name = "move_maker"
+
+            try:
+                print(f"Updating Cargo.lock with version {version}...")
+                result = subprocess.run(
+                    ["cargo", "update", "--package", package_name],
+                    cwd=repo_root,
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                print(f"✓ Cargo.lock updated to version {version}")
+            except subprocess.CalledProcessError as e:
+                print(f"Error updating Cargo.lock: {e}", file=sys.stderr)
+                print(f"stdout: {e.stdout}", file=sys.stderr)
+                print(f"stderr: {e.stderr}", file=sys.stderr)
+                sys.exit(1)
         else:
             print(f"ℹ Cargo.toml already at version {version}, no update needed")
     except Exception as e:

@@ -58,7 +58,7 @@ def get_tag_timestamp(tag: str) -> int:
         raise
 
 
-def get_commit_count(since_tag: str) -> int:
+def get_commit_count(since_tag: Optional[str] = None) -> int:
     """Get commit count since a tag for application-related files only.
 
     Only counts commits that modify files in src/, Cargo.toml, or Cargo.lock.
@@ -66,21 +66,29 @@ def get_commit_count(since_tag: str) -> int:
     are excluded from the count.
 
     Args:
-        since_tag: Git tag to count commits from
+        since_tag: Git tag to count commits from. If None, counts all commits.
 
     Returns:
-        Number of commits since the tag that modify application code or dependencies
+        Number of commits since the tag (or all commits if since_tag is None)
+        that modify application code or dependencies
 
     Raises:
-        ValueError: If tag doesn't exist
+        ValueError: If tag doesn't exist (only when since_tag is provided)
     """
     try:
+        if since_tag:
+            print(f"Counting commits since tag {since_tag} that modify application code...")
+            rev_range = f"{since_tag}..HEAD"
+        else:
+            print("Counting all commits that modify application code...")
+            rev_range = "HEAD"
+
         result = subprocess.run(
             [
                 "git",
                 "rev-list",
                 "--count",
-                f"{since_tag}..HEAD",
+                rev_range,
                 "--",
                 "src/",
                 "Cargo.toml",
@@ -90,10 +98,16 @@ def get_commit_count(since_tag: str) -> int:
             text=True,
             check=True,
         )
-        return int(result.stdout.strip())
+        count = int(result.stdout.strip())
+        print(f"Found {count} commit(s) modifying application code")
+        return count
     except subprocess.CalledProcessError as e:
-        print(f"Error getting commit count: {e}", file=sys.stderr)
-        raise ValueError(f"Tag {since_tag} not found") from e
+        if since_tag:
+            print(f"Error getting commit count: {e}", file=sys.stderr)
+            raise ValueError(f"Tag {since_tag} not found") from e
+        else:
+            print(f"Error getting commit count: {e}", file=sys.stderr)
+            return 0
     except ValueError as e:
         print(f"Error parsing commit count: {e}", file=sys.stderr)
         raise
@@ -108,6 +122,7 @@ def determine_bump_type(prs) -> str:
     Returns:
         Bump type: "MAJOR", "MINOR", or "PATCH"
     """
+    print(f"Analyzing {len(prs)} PR(s) for version labels...")
     major_bump = False
     minor_bump = False
 
@@ -121,10 +136,13 @@ def determine_bump_type(prs) -> str:
             print(f"PR #{pr.number} has minor version label")
 
     if major_bump:
+        print("Determined bump type: MAJOR (breaking changes detected)")
         return "MAJOR"
     elif minor_bump:
+        print("Determined bump type: MINOR (features detected)")
         return "MINOR"
     else:
+        print("Determined bump type: PATCH (no major/minor labels found)")
         return "PATCH"
 
 
@@ -186,32 +204,40 @@ def calculate_new_version(
         ValueError: If version calculation fails, or if tag version format is invalid
     """
     latest_tag = get_latest_tag()
+    cargo_path = f"{repo_path}/Cargo.toml" if repo_path != "." else "Cargo.toml"
 
+    # Determine base version and timestamp based on whether tag exists
     if not latest_tag:
-        # First release - use version from Cargo.toml
-        cargo_path = f"{repo_path}/Cargo.toml" if repo_path != "." else "Cargo.toml"
-        version = read_cargo_version(cargo_path)
-        print(
-            f"No previous tag found (first release), using base version from Cargo.toml: {version}"
-        )
-        return (version, f"v{version}")
+        print("No tags found - this will be the first release")
+        # First release - get base version from Cargo.toml
+        print("Determining base version from Cargo.toml...")
+        base_version = read_cargo_version(cargo_path)
+        print(f"Base version from Cargo.toml: {base_version}")
+        # Use timestamp 0 to get all PRs, and None for commit count (count all commits)
+        tag_timestamp = 0
+        tag_for_commit_count = None
+    else:
+        print(f"Found latest tag: {latest_tag}")
+        # Extract version from tag (remove 'v' prefix)
+        print(f"Extracting base version from tag: {latest_tag}")
+        base_version = latest_tag.lstrip("v")
+        print(f"Base version: {base_version}")
 
-    # Extract version from tag (remove 'v' prefix)
-    base_version = latest_tag.lstrip("v")
+        # Validate tag version format immediately
+        try:
+            Version(base_version)  # Raises InvalidVersion if invalid
+        except InvalidVersion as e:
+            raise ValueError(
+                f"Invalid version format in git tag '{latest_tag}': {base_version}. "
+                "Expected semantic version (e.g., 1.0.0)"
+            ) from e
 
-    # Validate tag version format immediately
-    try:
-        Version(base_version)  # Raises InvalidVersion if invalid
-    except InvalidVersion as e:
-        raise ValueError(
-            f"Invalid version format in git tag '{latest_tag}': {base_version}. "
-            "Expected semantic version (e.g., 1.0.0)"
-        ) from e
+        # Get tag timestamp
+        tag_timestamp = get_tag_timestamp(latest_tag)
+        tag_for_commit_count = latest_tag
 
-    # Get tag timestamp
-    tag_timestamp = get_tag_timestamp(latest_tag)
-
-    # Get merged PRs since tag
+    # Shared logic for both scenarios
+    # Get merged PRs since tag (or all PRs if timestamp is 0)
     prs = github_client.get_merged_prs_since(tag_timestamp)
 
     # Determine bump type
@@ -219,15 +245,21 @@ def calculate_new_version(
 
     # Get commit count for patch bump
     if bump_type == "PATCH":
-        commit_count = get_commit_count(latest_tag)
+        commit_count = get_commit_count(tag_for_commit_count)
     else:
         commit_count = 0
 
     # Calculate version
     new_version = calculate_version(base_version, bump_type, commit_count)
 
-    print(f"Latest tag: {latest_tag}")
-    print(f"Bump type: {bump_type}")
-    print(f"Calculated version: {new_version}")
+    # Log comprehensive summary
+    print("=" * 50)
+    print("Version Calculation Summary:")
+    print(f"  Base version: {base_version}")
+    print(f"  Bump type: {bump_type}")
+    if bump_type == "PATCH":
+        print(f"  Commit count: {commit_count}")
+    print(f"  Calculated version: {new_version}")
+    print("=" * 50)
 
     return (new_version, f"v{new_version}")

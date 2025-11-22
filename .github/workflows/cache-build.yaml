@@ -1,0 +1,54 @@
+name: Cache Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-cache:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+        with:
+          # Sparse checkout: Only fetch Cargo.toml and Cargo.lock
+          # Optimization: Reduces checkout time and bandwidth since we only need
+          # these files for cargo fetch and tool installation
+          sparse-checkout: |
+            Cargo.toml
+            Cargo.lock
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331  # master
+        with:
+          toolchain: 1.90.0
+          components: clippy rustfmt llvm-tools-preview
+
+      - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1  # v2.8.1
+        with:
+          shared-key: "rust-cache"
+          cache-targets: false
+
+      - name: Install security tools
+        run: cargo install cargo-deny cargo-audit cargo-auditable
+
+      - name: Install cargo-geiger
+        run: cargo install --locked cargo-geiger
+
+      - name: Install cargo-nextest
+        run: cargo install cargo-nextest
+
+      - name: Install cargo-llvm-cov
+        run: cargo install cargo-llvm-cov
+
+      # Note: Pre-commit is NOT installed here because:
+      # 1. rust-cache doesn't cache Python packages (pre-commit is a Python tool)
+      # 2. The pre-commit job installs it fresh each run anyway
+      # 3. Installing it here provides no benefit to other workflows
+
+      - name: Fetch dependencies
+        run: cargo fetch

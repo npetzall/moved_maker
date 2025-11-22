@@ -36,26 +36,27 @@ Implement efficient Rust/Cargo cache configuration using `shared-key` to enable 
 
 **Task**: Create a new workflow file that builds and populates the cache on every push to main
 
-- [ ] Create `.github/workflows/cache-build.yaml`
-- [ ] Add workflow name: `Cache Build`
-- [ ] Configure trigger: `on.push.branches: [main]`
-- [ ] Create `build-cache` job with matrix strategy for `ubuntu-latest` and `macos-latest`
-- [ ] Add checkout step using `actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd` (v5.0.1)
-- [ ] Add Python setup step using `actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c` (v6.0.0) with Python 3.11
-- [ ] Add Rust installation step using `dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331` (master) with:
+- [x] Create `.github/workflows/cache-build.yaml`
+- [x] Add workflow name: `Cache Build`
+- [x] Configure trigger: `on.push.branches: [main]`
+- [x] Create `build-cache` job with matrix strategy for `ubuntu-latest` and `macos-latest`
+- [x] Add checkout step using `actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd` (v5.0.1)
+  - [x] Add sparse-checkout to only fetch `Cargo.toml` and `Cargo.lock` (optimization: reduces checkout time/bandwidth since we only need these files for `cargo fetch`)
+- [x] ~~Add Python setup step~~ (REMOVED: Not needed - pre-commit is not cached by rust-cache, so installing it here doesn't benefit other workflows)
+- [x] Add Rust installation step using `dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331` (master) with:
   - toolchain: 1.90.0
   - components: clippy rustfmt llvm-tools-preview
-- [ ] Add rust-cache step using `Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1` (v2.8.1) with:
+- [x] Add rust-cache step using `Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1` (v2.8.1) with:
   - shared-key: "rust-cache"
   - cache-targets: false
-- [ ] Add step to install security tools: `cargo install cargo-deny cargo-audit cargo-auditable`
-- [ ] Add step to install cargo-geiger: `cargo install --locked cargo-geiger`
-- [ ] Add step to install cargo-nextest: `cargo install cargo-nextest`
-- [ ] Add step to install cargo-llvm-cov: `cargo install cargo-llvm-cov`
-- [ ] Add step to install pre-commit: `pip install pre-commit`
-- [ ] Add step to fetch dependencies: `cargo fetch`
-- [ ] Verify YAML syntax is correct
-- [ ] Verify all action versions match those used in other workflows
+- [x] Add step to install security tools: `cargo install cargo-deny cargo-audit cargo-auditable`
+- [x] Add step to install cargo-geiger: `cargo install --locked cargo-geiger`
+- [x] Add step to install cargo-nextest: `cargo install cargo-nextest`
+- [x] Add step to install cargo-llvm-cov: `cargo install cargo-llvm-cov`
+- [x] ~~Add step to install pre-commit~~ (REMOVED: Pre-commit is a Python tool that rust-cache doesn't cache. The pre-commit job installs it fresh each run, so caching it here provides no benefit)
+- [x] Add step to fetch dependencies: `cargo fetch`
+- [x] Verify YAML syntax is correct
+- [x] Verify all action versions match those used in other workflows
 
 **Expected result:**
 ```yaml
@@ -75,11 +76,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
-
-      - name: Setup Python
-        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c  # v6.0.0
         with:
-          python-version: '3.11'
+          # Sparse checkout: Only fetch Cargo.toml and Cargo.lock
+          # Optimization: Reduces checkout time and bandwidth since we only need
+          # these files for cargo fetch and tool installation
+          sparse-checkout: |
+            Cargo.toml
+            Cargo.lock
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331  # master
@@ -104,8 +107,10 @@ jobs:
       - name: Install cargo-llvm-cov
         run: cargo install cargo-llvm-cov
 
-      - name: Install pre-commit
-        run: pip install pre-commit
+      # Note: Pre-commit is NOT installed here because:
+      # 1. rust-cache doesn't cache Python packages (pre-commit is a Python tool)
+      # 2. The pre-commit job installs it fresh each run anyway
+      # 3. Installing it here provides no benefit to other workflows
 
       - name: Fetch dependencies
         run: cargo fetch
@@ -123,12 +128,12 @@ jobs:
 
 **Task**: Add `shared-key: "rust-cache"` to the rust-cache step in the security job
 
-- [ ] Open `.github/workflows/pull_request.yaml`
-- [ ] Locate the rust-cache step in the `security` job (line 19)
-- [ ] Add `with:` section if not present
-- [ ] Add `shared-key: "rust-cache"` parameter
-- [ ] Verify indentation matches other steps
-- [ ] Verify the step now looks like:
+- [x] Open `.github/workflows/pull_request.yaml`
+- [x] Locate the rust-cache step in the `security` job (line 19)
+- [x] Add `with:` section if not present
+- [x] Add `shared-key: "rust-cache"` parameter
+- [x] Verify indentation matches other steps
+- [x] Verify the step now looks like:
   ```yaml
   - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1  # v2.8.1
     with:
@@ -143,13 +148,13 @@ jobs:
 
 **Task**: Add `shared-key: "rust-cache"` and `cache-targets: true` to the rust-cache step in the test job
 
-- [ ] Locate the rust-cache step in the `test` job (line 62)
-- [ ] Update the `with:` section to include:
+- [x] Locate the rust-cache step in the `test` job (line 62)
+- [x] Update the `with:` section to include:
   - `shared-key: "rust-cache"`
   - `cache-targets: true`
   - Keep existing `cache-on-failure: false`
-- [ ] Verify indentation matches other steps
-- [ ] Verify the step now looks like:
+- [x] Verify indentation matches other steps
+- [x] Verify the step now looks like:
   ```yaml
   - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1  # v2.8.1
     with:
@@ -166,13 +171,13 @@ jobs:
 
 **Task**: Add `shared-key: "rust-cache"` and `cache-targets: true` to the rust-cache step in the coverage job
 
-- [ ] Locate the rust-cache step in the `coverage` job (line 92)
-- [ ] Update the `with:` section to include:
+- [x] Locate the rust-cache step in the `coverage` job (line 92)
+- [x] Update the `with:` section to include:
   - `shared-key: "rust-cache"`
   - `cache-targets: true`
   - Keep existing `cache-on-failure: false`
-- [ ] Verify indentation matches other steps
-- [ ] Verify the step now looks like:
+- [x] Verify indentation matches other steps
+- [x] Verify the step now looks like:
   ```yaml
   - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1  # v2.8.1
     with:
@@ -189,12 +194,12 @@ jobs:
 
 **Task**: Add `shared-key: "rust-cache"` and `cache-targets: true` to the rust-cache step in the pre-commit job
 
-- [ ] Locate the rust-cache step in the `pre-commit` job (line 138)
-- [ ] Add `with:` section with:
+- [x] Locate the rust-cache step in the `pre-commit` job (line 138)
+- [x] Add `with:` section with:
   - `shared-key: "rust-cache"`
   - `cache-targets: true`
-- [ ] Verify indentation matches other steps
-- [ ] Verify the step now looks like:
+- [x] Verify indentation matches other steps
+- [x] Verify the step now looks like:
   ```yaml
   - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1  # v2.8.1
     with:
@@ -214,12 +219,12 @@ jobs:
 
 **Task**: Add `shared-key: "rust-cache"` to the rust-cache step in the security job
 
-- [ ] Open `.github/workflows/release-build.yaml`
-- [ ] Locate the rust-cache step in the `security` job (line 22)
-- [ ] Add `with:` section if not present
-- [ ] Add `shared-key: "rust-cache"` parameter
-- [ ] Verify indentation matches other steps
-- [ ] Verify the step now looks like:
+- [x] Open `.github/workflows/release-build.yaml`
+- [x] Locate the rust-cache step in the `security` job (line 22)
+- [x] Add `with:` section if not present
+- [x] Add `shared-key: "rust-cache"` parameter
+- [x] Verify indentation matches other steps
+- [x] Verify the step now looks like:
   ```yaml
   - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1  # v2.8.1
     with:
@@ -234,13 +239,13 @@ jobs:
 
 **Task**: Add `shared-key: "rust-cache"` and `cache-targets: true` to the rust-cache step in the coverage job
 
-- [ ] Locate the rust-cache step in the `coverage` job (line 64)
-- [ ] Update the `with:` section to include:
+- [x] Locate the rust-cache step in the `coverage` job (line 64)
+- [x] Update the `with:` section to include:
   - `shared-key: "rust-cache"`
   - `cache-targets: true`
   - Keep existing `cache-on-failure: false`
-- [ ] Verify indentation matches other steps
-- [ ] Verify the step now looks like:
+- [x] Verify indentation matches other steps
+- [x] Verify the step now looks like:
   ```yaml
   - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1  # v2.8.1
     with:
@@ -257,13 +262,13 @@ jobs:
 
 **Task**: Add `shared-key: "rust-cache"` to the rust-cache step in the build-and-release job
 
-- [ ] Locate the rust-cache step in the `build-and-release` job (line 125)
-- [ ] Update the `with:` section to include:
+- [x] Locate the rust-cache step in the `build-and-release` job (line 125)
+- [x] Update the `with:` section to include:
   - `shared-key: "rust-cache"`
   - Keep existing `cache-targets: true`
   - Keep existing `cache-on-failure: false`
-- [ ] Verify indentation matches other steps
-- [ ] Verify the step now looks like:
+- [x] Verify indentation matches other steps
+- [x] Verify the step now looks like:
   ```yaml
   - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1  # v2.8.1
     with:

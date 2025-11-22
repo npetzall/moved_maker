@@ -1,0 +1,10 @@
+[default.extend-words]
+# Add project-specific words
+terraform = "terraform"
+hcl = "hcl"
+moved = "moved"
+maker = "maker"
+
+[default.extend-identifiers]
+# Allow specific identifiers (add as needed)
+# ResourceID = "ResourceID"

@@ -82,6 +82,16 @@ repos:
     hooks:
       - id: ripsecrets
 
+  # Spell checking files, and commit message
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.39.2
+    hooks:
+      - id: typos
+        name: typos
+        # Check source code or commit message
+        args: [--config, .config/typos.toml]
+        stages: [pre-commit, commit-msg]
+
   # Commit message validation (Conventional Commits)
   - repo: https://github.com/welpo/git-sumi
     rev: v0.2.0

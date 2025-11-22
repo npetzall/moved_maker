@@ -186,7 +186,7 @@ Current issues:
 
 ## Notes
 
-- The Python script should be placed in `.github/scripts/release-version/` (note: user specified "relese-version" but likely meant "release-version")
+- The Python script should be placed in `.github/scripts/release-version/`
 - Use `uv` for fast dependency management and environment creation
 - `pyproject.toml` is preferred by `uv` and supported by Dependabot
 - `uv.lock` ensures reproducible builds

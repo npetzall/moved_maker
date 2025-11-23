@@ -15,5 +15,8 @@ anyhow = "1.0"
 tempfile = "3.10"
 pretty_assertions = "1.4"
 
+[lints.rust]
+warnings = "deny"
+
 [profile.release]
 strip = "debuginfo"  # Strip debug symbols, preserve custom linker sections (e.g., cargo-auditable data)

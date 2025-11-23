@@ -13,16 +13,22 @@
 // limitations under the License.
 #![forbid(unsafe_code)]
 
+mod address;
 mod cli;
-mod file_discovery;
+mod moved_block;
+mod moved_module;
+mod moved_resource;
 mod output;
 mod parser;
-mod processor;
+mod pipeline;
+mod terraform_files;
+mod to_moved_block;
 
 use anyhow::Result;
 use clap::Parser;
 use cli::Args;
-use output::{MovedBlockBuilder, build_output_body};
+use output::build_output_body;
+use pipeline::MovedBlockBuilder;
 
 fn main() {
     if let Err(e) = run() {

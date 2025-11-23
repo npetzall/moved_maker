@@ -4,7 +4,9 @@ terraform = "terraform"
 hcl = "hcl"
 moved = "moved"
 maker = "maker"
+HashiCorp = "HashiCorp"
 
 [default.extend-identifiers]
 # Allow specific identifiers (add as needed)
 # ResourceID = "ResourceID"
+"HashiCorp" = "HashiCorp"

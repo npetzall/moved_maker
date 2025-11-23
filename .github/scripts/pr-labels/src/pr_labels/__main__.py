@@ -50,7 +50,8 @@ def determine_bump_from_commits(messages: List[str], pr_title: str = "", pr_body
         # Major: explicit BREAKING CHANGE in body or '!' in header per Conventional Commits
         if "breaking change" in body.lower():
             return "major"
-        if re.search(r"^[^:]+!:", header):
+        # Match feat!: or feat(scope)!: patterns
+        if re.search(r"^[a-zA-Z]+(\([^)]+\))?!:", header):
             return "major"
         # Minor: feat:
         if header.lower().startswith("feat:") or header.lower().startswith("feat("):
@@ -62,9 +63,10 @@ def determine_bump_from_commits(messages: List[str], pr_title: str = "", pr_body
                 best = "patch"
     # Supplemental signals from PR title/body
     if best != "major":
-        if pr_title and ("BREAKING CHANGE" in pr_title or "!" in pr_title):
+        if "BREAKING CHANGE" in pr_title or "BREAKING CHANGE" in pr_body:
             return "major"
-        if pr_body and "BREAKING CHANGE" in pr_body:
+        # Check for Conventional Commits breaking change indicator in title
+        if re.search(r"^[a-zA-Z]+(\([^)]+\))?!:", pr_title):
             return "major"
     return best
 
@@ -130,6 +132,7 @@ def main():
     gh = Github(token)
     repo = gh.get_repo(repo_name)
     pull = repo.get_pull(pr_number)
+    issue = pull.get_issue()
 
     # Collect commit messages
     commits = pull.get_commits()
@@ -148,20 +151,20 @@ def main():
         desired.append(alt)
 
     # Remove existing version/alt labels
-    existing = [l.name for l in pull.get_issue().get_labels()]
+    existing = [l.name for l in issue.get_labels()]
     remove_cands = list(VERSION_LABELS.values()) + [v for v in ALT_LABELS.values() if v]
     for lab in remove_cands:
         if lab in existing and lab not in desired:
             logger.info("Removing label %s", lab)
             if not args.dry_run:
-                pull.get_issue().remove_from_labels(lab)
+                issue.remove_from_labels(lab)
 
     # Ensure desired labels exist
     for lab in desired:
         ensure_label(repo, lab, dry_run=args.dry_run)
 
     # Add labels
-    add_labels_to_issue(pull.get_issue(), desired, dry_run=args.dry_run)
+    add_labels_to_issue(issue, desired, dry_run=args.dry_run)
 
     logger.info("Done")
 

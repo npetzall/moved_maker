@@ -1,0 +1,20 @@
+[project]
+name = "pr-labels"
+version = "0.1.0"
+description = "PR labeling utility for moved_maker"
+authors = [
+    {name = "npetzall", email = "nils.petzall@gmail.com"}
+]
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.11"
+dependencies = [
+    "PyGithub>=1.78"
+]
+
+[project.scripts]
+pr_labels = "pr_labels.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

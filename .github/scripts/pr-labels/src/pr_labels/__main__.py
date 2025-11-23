@@ -51,7 +51,8 @@ def determine_version_bump(commits: List) -> Tuple[str, str]:
         commits: List of commit objects from PyGithub
         
     Returns:
-        Tuple of (version_label, alt_label) where alt_label may be empty
+        Tuple of (version_label, alt_label) where alt_label may be empty.
+        Defaults to 'version: patch' if no feat or breaking changes found.
     """
     has_breaking = False
     has_feature = False
@@ -72,6 +73,7 @@ def determine_version_bump(commits: List) -> Tuple[str, str]:
     elif has_feature:
         return "version: minor", "feature"
     else:
+        # Default to patch for any other commits (fix, docs, chore, etc.)
         return "version: patch", ""
 
 
@@ -167,25 +169,16 @@ def get_all_pr_commits(pr) -> List:
     Returns:
         List of all commits in the PR
     """
-    commits = []
-    page = 0
-    per_page = 100
-    
     print(f"Fetching commits for PR #{pr.number}...")
     
-    while True:
-        try:
-            # PyGithub handles pagination automatically through PaginatedList
-            commits_page = pr.get_commits()
-            commits_list = list(commits_page)
-            commits.extend(commits_list)
-            print(f"✓ Fetched {len(commits_list)} commit(s)")
-            break
-        except GithubException as e:
-            print(f"Error fetching commits: {e}", file=sys.stderr)
-            raise
+    try:
+        # PyGithub handles pagination automatically through PaginatedList
+        commits = list(pr.get_commits())
+        print(f"✓ Fetched {len(commits)} commit(s)")
+    except GithubException as e:
+        print(f"Error fetching commits: {e}", file=sys.stderr)
+        raise
     
-    print(f"Total commits in PR: {len(commits)}")
     return commits
 
 
@@ -316,14 +309,14 @@ def main() -> int:
         
         # Determine version bump from commits
         version_label, alt_label = determine_version_bump(commits)
-        print(f"\nDetermined from commits: {version_label}" + 
-              (f", {alt_label}" if alt_label else ""))
+        label_str = f"{version_label}, {alt_label}" if alt_label else version_label
+        print(f"\nDetermined from commits: {label_str}")
         
         # Check PR title/body as supplemental signal
         pr_version, pr_alt = check_pr_title_body(pr)
         if pr_version and pr_version != version_label:
-            print(f"PR title/body suggests: {pr_version}" +
-                  (f", {pr_alt}" if pr_alt else ""))
+            pr_label_str = f"{pr_version}, {pr_alt}" if pr_alt else pr_version
+            print(f"PR title/body suggests: {pr_label_str}")
             # PR title/body takes precedence if it suggests a higher bump
             if pr_version == "version: major":
                 version_label, alt_label = pr_version, pr_alt

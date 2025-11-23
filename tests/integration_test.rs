@@ -306,3 +306,168 @@ fn test_module_name_with_underscores() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("module.my_module.aws_instance.web"));
 }
+
+#[test]
+fn test_single_module_file() {
+    let temp_dir = TempDir::new().unwrap();
+    let fixture_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests")
+        .join("fixtures")
+        .join("single_module.tf");
+
+    fs::copy(&fixture_file, temp_dir.path().join("main.tf")).unwrap();
+
+    let binary = get_binary_path();
+    let output = Command::new(&binary)
+        .arg("--src")
+        .arg(temp_dir.path())
+        .arg("--module-name")
+        .arg("a")
+        .output()
+        .expect("Failed to execute command");
+
+    assert!(
+        output.status.success(),
+        "Command failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("# From: main.tf"));
+    assert!(stdout.contains("moved"));
+    assert!(stdout.contains("from = module.web_server"));
+    assert!(stdout.contains("to = module.a.module.web_server"));
+}
+
+#[test]
+fn test_multiple_modules() {
+    let temp_dir = TempDir::new().unwrap();
+    let fixture_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests")
+        .join("fixtures")
+        .join("multiple_modules.tf");
+
+    fs::copy(&fixture_file, temp_dir.path().join("main.tf")).unwrap();
+
+    let binary = get_binary_path();
+    let output = Command::new(&binary)
+        .arg("--src")
+        .arg(temp_dir.path())
+        .arg("--module-name")
+        .arg("compute")
+        .output()
+        .expect("Failed to execute command");
+
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // Should have 3 moved blocks
+    let moved_count = stdout.matches("moved").count();
+    assert_eq!(moved_count, 3);
+
+    assert!(stdout.contains("module.web_server"));
+    assert!(stdout.contains("module.database"));
+    assert!(stdout.contains("module.cache"));
+    assert!(stdout.contains("from = module.web_server"));
+    assert!(stdout.contains("to = module.compute.module.web_server"));
+    assert!(stdout.contains("from = module.database"));
+    assert!(stdout.contains("to = module.compute.module.database"));
+    assert!(stdout.contains("from = module.cache"));
+    assert!(stdout.contains("to = module.compute.module.cache"));
+}
+
+#[test]
+fn test_mixed_resources_and_modules() {
+    let temp_dir = TempDir::new().unwrap();
+    let fixture_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests")
+        .join("fixtures")
+        .join("mixed_resources_and_modules.tf");
+
+    fs::copy(&fixture_file, temp_dir.path().join("main.tf")).unwrap();
+
+    let binary = get_binary_path();
+    let output = Command::new(&binary)
+        .arg("--src")
+        .arg(temp_dir.path())
+        .arg("--module-name")
+        .arg("compute")
+        .output()
+        .expect("Failed to execute command");
+
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // Should have 4 moved blocks (2 resources + 2 modules, data blocks are ignored)
+    let moved_count = stdout.matches("moved").count();
+    assert_eq!(moved_count, 4);
+
+    // Verify resources
+    assert!(stdout.contains("aws_instance.web"));
+    assert!(stdout.contains("aws_s3_bucket.data"));
+    assert!(stdout.contains("from = aws_instance.web"));
+    assert!(stdout.contains("to = module.compute.aws_instance.web"));
+    assert!(stdout.contains("from = aws_s3_bucket.data"));
+    assert!(stdout.contains("to = module.compute.aws_s3_bucket.data"));
+
+    // Verify modules
+    assert!(stdout.contains("module.web_server"));
+    assert!(stdout.contains("module.database"));
+    assert!(stdout.contains("from = module.web_server"));
+    assert!(stdout.contains("to = module.compute.module.web_server"));
+    assert!(stdout.contains("from = module.database"));
+    assert!(stdout.contains("to = module.compute.module.database"));
+
+    // Data blocks should not be processed
+    assert!(!stdout.contains("data.aws_ami.example"));
+}
+
+#[test]
+fn test_module_name_with_hyphens_for_modules() {
+    let temp_dir = TempDir::new().unwrap();
+    let fixture_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests")
+        .join("fixtures")
+        .join("single_module.tf");
+
+    fs::copy(&fixture_file, temp_dir.path().join("main.tf")).unwrap();
+
+    let binary = get_binary_path();
+    let output = Command::new(&binary)
+        .arg("--src")
+        .arg(temp_dir.path())
+        .arg("--module-name")
+        .arg("my-module")
+        .output()
+        .expect("Failed to execute command");
+
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("module.my-module.module.web_server"));
+}
+
+#[test]
+fn test_module_name_with_underscores_for_modules() {
+    let temp_dir = TempDir::new().unwrap();
+    let fixture_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests")
+        .join("fixtures")
+        .join("single_module.tf");
+
+    fs::copy(&fixture_file, temp_dir.path().join("main.tf")).unwrap();
+
+    let binary = get_binary_path();
+    let output = Command::new(&binary)
+        .arg("--src")
+        .arg(temp_dir.path())
+        .arg("--module-name")
+        .arg("my_module")
+        .output()
+        .expect("Failed to execute command");
+
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("module.my_module.module.web_server"));
+}

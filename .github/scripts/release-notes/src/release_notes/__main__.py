@@ -9,6 +9,74 @@ from github import Auth, Github, GithubException
 from release_notes import formatter, git, parser
 
 
+def find_workspace_root(start_path: Path) -> Path | None:
+    """
+    Recursively traverse up the directory tree to find the workspace root.
+
+    Looks for Cargo.toml as a marker file indicating the workspace root.
+    Stops at filesystem root if not found.
+
+    Args:
+        start_path: Starting directory path to begin search from
+
+    Returns:
+        Path to workspace root directory if found, None otherwise
+    """
+    start_path = start_path.resolve()
+
+    # Check if Cargo.toml exists in current directory
+    cargo_toml = start_path / "Cargo.toml"
+    if cargo_toml.exists():
+        return start_path
+
+    # Base case: reached filesystem root
+    parent = start_path.parent
+    if parent == start_path:  # At root directory (e.g., / on Unix, C:\ on Windows)
+        return None
+
+    # Recursive case: traverse up one level
+    return find_workspace_root(parent)
+
+
+def get_workspace_root() -> Path:
+    """
+    Get the workspace root directory.
+
+    Priority:
+    1. GITHUB_WORKSPACE environment variable (automatically set by GitHub Actions)
+    2. Recursively find workspace root by traversing up from script location looking for Cargo.toml
+
+    Returns:
+        Path to workspace root directory
+
+    Raises:
+        RuntimeError: If workspace root cannot be determined
+    """
+    # First, try GITHUB_WORKSPACE (automatically set by GitHub Actions)
+    workspace_env = os.environ.get("GITHUB_WORKSPACE")
+    if workspace_env:
+        workspace_path = Path(workspace_env)
+        if workspace_path.exists() and workspace_path.is_dir():
+            return workspace_path.resolve()
+        print(
+            f"Warning: GITHUB_WORKSPACE points to non-existent directory: {workspace_env}",
+            file=sys.stderr
+        )
+
+    # Fallback: Recursively find workspace root from script location
+    script_file = Path(__file__).resolve()
+    workspace_root = find_workspace_root(script_file.parent)
+
+    if workspace_root is None:
+        raise RuntimeError(
+            f"Could not determine workspace root. "
+            f"Traversed up from {script_file} but could not find Cargo.toml. "
+            f"Set GITHUB_WORKSPACE environment variable or ensure Cargo.toml exists in workspace root."
+        )
+
+    return workspace_root
+
+
 def main() -> int:
     """Main entry point for release-notes application."""
     # Parse environment variables
@@ -97,10 +165,16 @@ def main() -> int:
                 f.write(release_notes)
                 f.write("\nEOF\n")
 
-        # Write to release_notes.md file
-        output_file = Path("release_notes.md")
-        with output_file.open("w") as f:
-            f.write(release_notes)
+        # Write to release_notes.md file at workspace root
+        try:
+            workspace_root = get_workspace_root()
+            output_file = workspace_root / "release_notes.md"
+            with output_file.open("w") as f:
+                f.write(release_notes)
+            print(f"   Release notes written to: {output_file}")
+        except RuntimeError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
 
         print(f"✅ Release notes generated successfully for {current_tag_name}")
         print(f"   Total commits: {len(commits)}")

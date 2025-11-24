@@ -1,0 +1,30 @@
+# Planning Documents Rules
+
+## Document Structure
+- Use REQ_ prefix for requests, BUG_ prefix for bug reports
+- Include status header at the top: **Status**: 📋 Planned | 🟡 In Progress | ✅ Complete | ⏸️ Blocked
+- Start with Overview section: current state, problem statement, or requirements
+- Include clear task breakdowns
+- Provide implementation details and examples
+- Document benefits and considerations
+
+## Template Usage
+- Always read and reference templates from `.cursor/templates/` directory before generating documents
+- For REQ_ documents, read `.cursor/templates/req_template.md` and use it as a starting point
+- For BUG_ documents, read `.cursor/templates/bug_template.md` and use it as a starting point
+- For implementation plans, read `.cursor/templates/implementation_plan_template.md` and use it as a starting point
+- Adapt templates to the specific context while maintaining structure
+- Implementation plans are created in `work/` folder with the same filename as the `plan/` document
+
+## Markdown Formatting
+- Use clear headings (## for main sections, ### for subsections)
+- Use code blocks with language identifiers
+- Include file paths and line numbers when referencing code
+- Use lists for task items and considerations
+
+## Content Guidelines
+- Be specific and actionable
+- Include references to GitHub issues when applicable
+- Document file locations that need changes
+- Provide examples of expected outcomes
+- Note any breaking changes or migration steps

@@ -1,0 +1,44 @@
+# Move Maker - Cursor Rules
+
+## Project Context
+This is a Rust CLI tool that parses Terraform files and generates `moved` blocks for refactoring resources and data sources into submodules.
+
+## Templates
+When generating REQ_, BUG_, or implementation plan documents, always reference and use the templates found in `.cursor/templates/`:
+- REQ_ documents: Read and follow `.cursor/templates/req_template.md` as a guide
+- BUG_ documents: Read and follow `.cursor/templates/bug_template.md` as a guide
+- Implementation plans: Read and follow `.cursor/templates/implementation_plan_template.md` as a guide
+Follow the template structure while adapting to the specific context.
+All documents should include a status header at the top (📋 Planned | 🟡 In Progress | ✅ Complete | ⏸️ Blocked).
+Implementation plans are created in `work/` folder with the same filename as the corresponding `plan/` document.
+
+## Work Documents - Where to Create Files
+- **REQ_ and BUG_ documents**: Create new documents in `plan/XX_Backlog/` first
+  - Use `REQ_` prefix for requests (features, enhancements, modifications)
+  - Use `BUG_` prefix for bug reports
+  - See `plan/.cursorrules` for detailed structure, workflow, and templates
+- **Implementation plans**: Create in `work/` folder, same year-week directory and identical filename as `plan/` document
+  - Example: `plan/24W48/REQ_EXAMPLE.md` → `work/24W48/REQ_EXAMPLE.md`
+  - See `work/.cursorrules` for detailed structure and templates
+
+## Rust Conventions (Project-Wide)
+- Follow Rust naming conventions (snake_case for functions/variables, PascalCase for types)
+- Prefer `Result<T>` over `Option<T>` for error handling
+- Use `anyhow::Result` for error propagation in application code
+- Use `panic!()` only for unrecoverable errors (e.g., invalid CLI arguments)
+- Prefer iterator chains over explicit loops when idiomatic
+- Use `#[derive(Debug)]` on all public types
+- Document public APIs with doc comments (`///`)
+- Use 4 spaces for indentation, max 100 characters per line
+- Use `cargo fmt` for formatting, `cargo clippy` for linting
+- Write unit tests with `#[cfg(test)]` modules, integration tests in `tests/`
+
+## Directory-Specific Rules
+Nested `.cursorrules` files provide detailed guidance when working in specific directories:
+- `src/.cursorrules` - Source code implementation guidelines
+- `tests/.cursorrules` - Test writing conventions
+- `.github/workflows/.cursorrules` - GitHub Actions workflow guidance
+- `.github/scripts/.cursorrules` - Python script development (uv, pytest)
+- `examples/.cursorrules` - Terraform example file guidelines
+- `plan/.cursorrules` - Planning document structure, workflow, and templates
+- `work/.cursorrules` - Implementation plan structure, workflow, and templates

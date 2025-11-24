@@ -486,6 +486,36 @@ The repository uses a `CODEOWNERS` file to define code ownership. When enabled i
 
 For more detailed troubleshooting, see the [GitHub Configuration troubleshooting section](../work/01_Quality/06_GitHub_Configuration.md#troubleshooting).
 
+## Cursor AI Templates
+
+This project uses standardized templates to guide Cursor AI when generating documentation. Templates ensure consistency, completeness, and proper structure for REQ_, BUG_, and implementation plan documents.
+
+### Template Location
+
+Templates are stored in `.cursor/templates/` directory:
+- `req_template.md` - Template for REQ_ documents (requests)
+- `bug_template.md` - Template for BUG_ documents (bug reports)
+- `implementation_plan_template.md` - Template for implementation plans
+
+### Template Usage
+
+Templates guide AI-generated documents and are referenced in `.cursorrules` files. When Cursor AI generates REQ_, BUG_, or implementation plan documents, it should:
+- Read the appropriate template from `.cursor/templates/` before generating documents
+- Follow the template structure while adapting to specific context
+- Include status headers (📋 Planned | 🟡 In Progress | ✅ Complete | ⏸️ Blocked) in all documents
+- Ensure implementation plans are created in `work/` folder with the same filename as the corresponding `plan/` document
+
+### Document Organization
+
+For complete details on document structure, naming conventions, and workflow, see:
+- `plan/03_W48/REQ_WORK_DOCUMENT_STRUCTURE.md` - Work document structure and organization guidelines
+- `plan/03_W48/CURSORRULES.md` - Complete `.cursorrules` setup guide
+- `plan/03_W48/CURSOR_AI_TEMPLATES.md` - Template specifications and usage
+
+### Template Maintenance
+
+Templates are reviewed quarterly or when documentation needs change. Updates should maintain consistency with the work document structure and ensure all required sections are present.
+
 ## Project Structure
 
 ```

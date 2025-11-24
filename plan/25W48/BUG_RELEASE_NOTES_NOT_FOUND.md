@@ -66,7 +66,7 @@ There are several possible approaches to fix this:
 
 ### Option 1: Write to absolute path in Python script ✅ **RECOMMENDED**
 
-Modify the Python script to write the file to the workspace root using an absolute path:
+Modify the Python script to write the file to the workspace root using an absolute path with a recursive function to find the workspace root:
 
 **File**: `.github/scripts/release-notes/src/release_notes/__main__.py`
 
@@ -75,20 +75,97 @@ Modify the Python script to write the file to the workspace root using an absolu
 output_file = Path("release_notes.md")
 ```
 
-**After**:
+**After** - Add helper functions before `main()`:
 ```python
-# Get workspace root from GITHUB_WORKSPACE or use absolute path
-workspace_root = Path(os.environ.get("GITHUB_WORKSPACE", Path.cwd().parent.parent.parent))
-output_file = workspace_root / "release_notes.md"
+def find_workspace_root(start_path: Path) -> Path | None:
+    """
+    Recursively traverse up the directory tree to find the workspace root.
+
+    Looks for Cargo.toml as a marker file indicating the workspace root.
+    Stops at filesystem root if not found.
+
+    Args:
+        start_path: Starting directory path to begin search from
+
+    Returns:
+        Path to workspace root directory if found, None otherwise
+    """
+    start_path = start_path.resolve()
+
+    # Check if Cargo.toml exists in current directory
+    cargo_toml = start_path / "Cargo.toml"
+    if cargo_toml.exists():
+        return start_path
+
+    # Base case: reached filesystem root
+    parent = start_path.parent
+    if parent == start_path:  # At root directory (e.g., / on Unix, C:\ on Windows)
+        return None
+
+    # Recursive case: traverse up one level
+    return find_workspace_root(parent)
+
+
+def get_workspace_root() -> Path:
+    """
+    Get the workspace root directory.
+
+    Priority:
+    1. GITHUB_WORKSPACE environment variable (automatically set by GitHub Actions)
+    2. Recursively find workspace root by traversing up from script location looking for Cargo.toml
+
+    Returns:
+        Path to workspace root directory
+
+    Raises:
+        RuntimeError: If workspace root cannot be determined
+    """
+    # First, try GITHUB_WORKSPACE (automatically set by GitHub Actions)
+    workspace_env = os.environ.get("GITHUB_WORKSPACE")
+    if workspace_env:
+        workspace_path = Path(workspace_env)
+        if workspace_path.exists() and workspace_path.is_dir():
+            return workspace_path.resolve()
+        print(
+            f"Warning: GITHUB_WORKSPACE points to non-existent directory: {workspace_env}",
+            file=sys.stderr
+        )
+
+    # Fallback: Recursively find workspace root from script location
+    script_file = Path(__file__).resolve()
+    workspace_root = find_workspace_root(script_file.parent)
+
+    if workspace_root is None:
+        raise RuntimeError(
+            f"Could not determine workspace root. "
+            f"Traversed up from {script_file} but could not find Cargo.toml. "
+            f"Set GITHUB_WORKSPACE environment variable or ensure Cargo.toml exists in workspace root."
+        )
+
+    return workspace_root
 ```
 
-Or use a more robust approach:
+**Then update the file writing code** (replace lines 100-103):
 ```python
-# Get workspace root - go up from .github/scripts/release-notes to workspace root
-# Current dir is .github/scripts/release-notes, so go up 3 levels
-workspace_root = Path.cwd().parent.parent.parent
-output_file = workspace_root / "release_notes.md"
+# Write to release_notes.md file at workspace root
+try:
+    workspace_root = get_workspace_root()
+    output_file = workspace_root / "release_notes.md"
+    with output_file.open("w") as f:
+        f.write(release_notes)
+    print(f"   Release notes written to: {output_file}")
+except RuntimeError as e:
+    print(f"Error: {e}", file=sys.stderr)
+    return 1
 ```
+
+**Benefits of this approach:**
+- Uses `__file__` instead of `Path.cwd()`, so it works regardless of current working directory
+- Recursive function finds workspace root by traversing up looking for `Cargo.toml`
+- No hardcoded path depths - works even if script is moved to different location
+- Primary reliance on `GITHUB_WORKSPACE` (automatically set by GitHub Actions)
+- Clear error handling with helpful error messages
+- Resilient to script relocation, working directory changes, and different project structures
 
 ### Option 2: Change workflow to not cd into directory
 
@@ -169,13 +246,18 @@ output_file = workspace_root / "release_notes.md"
 
 ## Recommended Solution
 
+**Option 1** ✅ **SELECTED** - This option has been selected for implementation.
+
 **Option 1** is recommended because:
 - It fixes the issue at the source (the script that creates the file)
-- It's the most robust solution (works regardless of where the script is run from)
+- It's the most robust solution (works regardless of where the script is run from or where it's located)
 - It doesn't require workflow changes
 - It makes the script's behavior explicit and predictable
+- Uses `__file__` to determine script location, independent of current working directory
+- Recursively finds workspace root by traversing up looking for `Cargo.toml` marker file
+- No hardcoded path depths, making it resilient to script relocation
 
-The script should write to an absolute path based on the workspace root, ensuring the file is always created in the correct location.
+The script should write to an absolute path based on the workspace root, using a recursive function to find the workspace root by looking for `Cargo.toml`. This ensures the file is always created in the correct location, regardless of the current working directory or script location.
 
 ## Impact
 
@@ -214,4 +296,4 @@ The `GITHUB_WORKSPACE` environment variable is automatically set by GitHub Actio
 
 ## Status
 
-🔴 **OPEN** - Release notes file path needs to be fixed
+🟡 **IN PROGRESS** - Option 1 selected, implementation plan created

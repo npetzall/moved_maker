@@ -1,30 +1,26 @@
 # Planning Documents Rules
 
-## Document Structure
-- Use REQ_ prefix for requests, BUG_ prefix for bug reports
-- Include status header at the top: **Status**: 📋 Planned | 🟡 In Progress | ✅ Complete | ⏸️ Blocked
-- Start with Overview section: current state, problem statement, or requirements
-- Include clear task breakdowns
-- Provide implementation details and examples
-- Document benefits and considerations
+## Document Naming and Organization
+- Use `REQ_` prefix for requests (features, enhancements, modifications)
+- Use `BUG_` prefix for bug reports
+- Newly create documents should be placed in `plan/XX_Backlog` (literal folder name, not a placeholder)
+- Both REQ_ and BUG_ documents get implementation plans in `work/` folder
+- No `done/` folders - use status headers instead
+- See REQ_WORK_DOCUMENT_STRUCTURE.md for complete structure guidelines
+- Note: `XX_Backlog` is primarily used by rules for new documents; year-week directories (e.g., `YYWW/`) are created manually by users
+
+## Workflow
+1. **Discovery** → Add to `plan/XX_Backlog/` with `REQ_` or `BUG_` prefix (literal folder name)
+2. **Planning** → Manually move to `plan/YYWW/` (year-week directory, e.g., `24W48/`), review and improve (manual step done by user)
+3. **Implementation** → After review/refinement, when requested by user, create matching file in `work/` folder with same folder name and same filename
+   - Example: `plan/YYWW/REQ_EXAMPLE.md` → `work/YYWW/REQ_EXAMPLE.md`
+   - Example: `plan/XX_Backlog/BUG_SOMETHING.md` → `work/XX_Backlog/BUG_SOMETHING.md`
+4. **Completion** → Update status to "✅ Complete" in `plan/` document (leave in place)
 
 ## Template Usage
-- Always read and reference templates from `.cursor/templates/` directory before generating documents
-- For REQ_ documents, read `.cursor/templates/req_template.md` and use it as a starting point
-- For BUG_ documents, read `.cursor/templates/bug_template.md` and use it as a starting point
-- For implementation plans, read `.cursor/templates/implementation_plan_template.md` and use it as a starting point
-- Adapt templates to the specific context while maintaining structure
-- Implementation plans are created in `work/` folder with the same filename as the `plan/` document
-
-## Markdown Formatting
-- Use clear headings (## for main sections, ### for subsections)
-- Use code blocks with language identifiers
-- Include file paths and line numbers when referencing code
-- Use lists for task items and considerations
-
-## Content Guidelines
-- Be specific and actionable
-- Include references to GitHub issues when applicable
-- Document file locations that need changes
-- Provide examples of expected outcomes
-- Note any breaking changes or migration steps
+- Always read and use templates from `.cursor/templates/` before generating documents:
+  - REQ_ documents → `.cursor/templates/req_template.md`
+  - BUG_ documents → `.cursor/templates/bug_template.md`
+  - Implementation plans → `.cursor/templates/implementation_plan_template.md`
+- Templates define all document structure, sections, formatting, and status header placement
+- Follow template structure exactly - do not add or remove sections

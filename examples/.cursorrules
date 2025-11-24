@@ -1,0 +1,24 @@
+# Example Terraform Files Rules
+
+## Example Structure
+- Each example should be self-contained and runnable
+- Include realistic but minimal Terraform configurations
+- Use clear, descriptive resource names
+- Include comments explaining the example's purpose
+
+## File Organization
+- Follow standard Terraform file naming: `main.tf`, `variables.tf`, `outputs.tf`, `data.tf`, `locals.tf`
+- Group related resources logically
+- Use consistent formatting (run `terraform fmt`)
+
+## Documentation
+- Include a README.md in each example directory explaining:
+  - What the example demonstrates
+  - How to run it
+  - Expected output
+- Add comments in Terraform files for complex logic
+
+## Testing Examples
+- Examples should be valid Terraform syntax
+- Avoid requiring real cloud credentials (use data sources or mock resources)
+- Keep examples focused on demonstrating tool functionality

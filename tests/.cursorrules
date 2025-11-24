@@ -1,0 +1,21 @@
+# Test Rules
+
+## Test Organization
+- One integration test file per major feature area
+- Use descriptive test function names: `test_<what>_<condition>_<expected_result>`
+- Group related tests using modules or comments
+
+## Test Fixtures
+- Place test fixtures in `tests/fixtures/` directory
+- Use descriptive fixture file names
+- Keep fixtures minimal and focused
+
+## Assertions
+- Use `assert!`, `assert_eq!`, `assert_ne!` for simple checks
+- Use `Result` return types for tests that can fail
+- Provide clear failure messages in assertions
+
+## Test Data
+- Use realistic but minimal test data
+- Avoid hardcoding paths - use `PathBuf` and relative paths
+- Clean up any temporary files created during tests

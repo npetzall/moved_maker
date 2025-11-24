@@ -15,44 +15,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
 
-      - name: Check gh CLI availability
-        run: |
-          if ! command -v gh &> /dev/null; then
-            echo "::error::GitHub CLI (gh) is not installed. Required for PR label management."
-            exit 1
-          fi
-          echo "✅ GitHub CLI is available: $(gh --version | head -n 1)"
+      - name: Install uv
+        uses: astral-sh/setup-uv@d7d33e16d4ecbbea0da49ecb6fcc16df877ddac8  # v5
 
       - name: Analyze commits and apply labels
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
         run: |
-          PR_NUM=${{ github.event.pull_request.number }}
-
-          # Get all commit messages in this PR
-          COMMITS=$(gh pr view $PR_NUM --json commits --jq '.commits[].message')
-
-          # Determine version bump type from commits
-          VERSION_LABEL=""
-          ALT_LABEL=""
-          if echo "$COMMITS" | grep -qE "(BREAKING CHANGE|!:)"; then
-            VERSION_LABEL="version: major"
-            ALT_LABEL="breaking"
-          elif echo "$COMMITS" | grep -qE "^feat:"; then
-            VERSION_LABEL="version: minor"
-            ALT_LABEL="feature"
-          fi
-
-          # Remove existing version labels (both primary and alternative)
-          gh pr edit $PR_NUM --remove-label "version: major" "version: minor" "version: patch" "breaking" "feature" 2>/dev/null || true
-
-          # Apply new labels if determined
-          if [ -n "$VERSION_LABEL" ]; then
-            gh pr edit $PR_NUM --add-label "$VERSION_LABEL"
-            if [ -n "$ALT_LABEL" ]; then
-              gh pr edit $PR_NUM --add-label "$ALT_LABEL"
-            fi
-            echo "Applied labels: $VERSION_LABEL${ALT_LABEL:+ and $ALT_LABEL}"
-          else
-            echo "No version label applied (patch bump)"
-          fi
+          cd .github/scripts/pr-labels
+          uv run python -m pr_labels

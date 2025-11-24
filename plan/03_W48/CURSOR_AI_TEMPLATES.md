@@ -2,16 +2,16 @@
 
 ## Overview
 
-This plan outlines the creation of standardized templates that Cursor AI can reference when generating change requests, bug reports, and implementation plans. These templates ensure consistency, completeness, and proper structure for project documentation and planning activities.
+This plan outlines the creation of standardized templates that Cursor AI can reference when generating requests (REQ_) and bug reports (BUG_) documents. These templates ensure consistency, completeness, and proper structure for project documentation and planning activities, following the work document structure defined in [REQ_WORK_DOCUMENT_STRUCTURE.md](REQ_WORK_DOCUMENT_STRUCTURE.md).
 
 ## Purpose
 
 Templates provide Cursor AI with structured formats for:
-- **Change Requests**: Documenting feature requests, enhancements, or modifications
-- **Bug Reports**: Capturing bug details with sufficient context for reproduction and resolution
-- **Implementation Plans**: Creating detailed, actionable plans for implementing features or fixes
+- **REQ_ Documents**: Documenting requests from users, developers, architects, stakeholders, or product owners (feature requests, enhancements, or modifications)
+- **BUG_ Documents**: Capturing bug details with sufficient context for reproduction and resolution
+- **Implementation Plans**: Creating detailed, actionable plans for implementing features or fixes (created in `work/` folder with same filename as corresponding `plan/` document)
 
-These templates will be referenced from `.cursorrules` files (see `CURSORRULES.md`) to guide AI-generated content.
+These templates will be referenced from `.cursorrules` files (see `CURSORRULES.md`) to guide AI-generated content. Both REQ_ and BUG_ documents get implementation plans in the `work/` folder (same filename, different location).
 
 ## Template Structure
 
@@ -23,23 +23,25 @@ Templates will be stored in a dedicated directory:
 
 ### Template File Naming
 
-- `change_request.md` - Template for change requests
-- `bug_report.md` - Template for bug reports
-- `implementation_plan.md` - Template for implementation plans
+- `req_template.md` - Template for REQ_ documents (requests)
+- `bug_template.md` - Template for BUG_ documents (bug reports)
+- `implementation_plan_template.md` - Template for implementation plans (created in `work/` folder)
 
 ## Template Specifications
 
-### 1. Change Request Template
+### 1. REQ_ Template
 
-**File**: `.cursor/templates/change_request.md`
+**File**: `.cursor/templates/req_template.md`
 
-**Purpose**: Standardize the format for documenting feature requests, enhancements, or modifications.
+**Purpose**: Standardize the format for documenting requests from users, developers, architects, stakeholders, or product owners.
 
 **Content**:
 ```markdown
-# Change Request: [Brief Title]
+# REQ: [Brief Title]
 
-## Summary
+**Status**: 📋 Planned | 🟡 In Progress | ✅ Complete | ⏸️ Blocked
+
+## Overview
 [One-sentence description of the requested change]
 
 ## Motivation
@@ -77,17 +79,19 @@ Templates will be stored in a dedicated directory:
 - External references: [links if applicable]
 ```
 
-### 2. Bug Report Template
+### 2. BUG_ Template
 
-**File**: `.cursor/templates/bug_report.md`
+**File**: `.cursor/templates/bug_template.md`
 
 **Purpose**: Ensure bug reports contain all necessary information for reproduction and resolution.
 
 **Content**:
 ```markdown
-# Bug Report: [Brief Description]
+# BUG: [Brief Description]
 
-## Summary
+**Status**: 📋 Planned | 🟡 In Progress | ✅ Complete | ⏸️ Blocked
+
+## Overview
 [One-sentence description of the bug]
 
 ## Environment
@@ -127,18 +131,34 @@ Templates will be stored in a dedicated directory:
 
 ### 3. Implementation Plan Template
 
-**File**: `.cursor/templates/implementation_plan.md`
+**File**: `.cursor/templates/implementation_plan_template.md`
 
-**Purpose**: Create structured, actionable implementation plans for features or fixes.
+**Purpose**: Create structured, actionable implementation plans for features or fixes. These plans are created in the `work/` folder with the same filename as the corresponding REQ_ or BUG_ document in the `plan/` folder.
 
 **Content**:
 ```markdown
 # Implementation Plan: [Feature/Fix Name]
 
+**Status**: 📋 Planned | 🟡 In Progress | ✅ Complete | ⏸️ Blocked
+
 ## Overview
 [Brief description of what will be implemented]
 
+## Checklist Summary
+
+### Phase 1: [Phase Name]
+- [ ] 0/2 tasks completed
+
+### Phase 2: [Phase Name]
+- [ ] 0/3 tasks completed
+
+### Phase 3: [Phase Name]
+- [ ] 0/2 tasks completed
+
+[Add additional phases as needed. Update task counts as tasks (not sub-tasks) are completed. Each task may contain multiple sub-tasks with their own checkboxes.]
+
 ## Context
+[Reference to corresponding REQ_ or BUG_ document in plan/ folder]
 [Current state, problem statement, or requirements]
 
 ## Goals
@@ -150,24 +170,82 @@ Templates will be stored in a dedicated directory:
 - [What is explicitly out of scope]
 
 ## Design Decisions
-- [Key design decision 1 and rationale]
-- [Key design decision 2 and rationale]
+
+**Important**: Document all key architectural and implementation decisions here. This section should explain the "why" behind major choices, not just the "what".
+
+- **[Decision 1]**: [Description of the decision]
+  - **Rationale**: [Why this approach was chosen]
+  - **Alternatives Considered**: [What other options were evaluated and why they were rejected]
+  - **Trade-offs**: [Any compromises or limitations]
+
+- **[Decision 2]**: [Description of the decision]
+  - **Rationale**: [Why this approach was chosen]
+  - **Alternatives Considered**: [What other options were evaluated and why they were rejected]
+  - **Trade-offs**: [Any compromises or limitations]
+
+[Add additional design decisions as needed]
 
 ## Implementation Steps
 
-### Phase 1: [Phase Name]
-1. **Task**: [Description]
-   - **Files**: [List of files to modify/create]
-   - **Dependencies**: [Any prerequisites]
-   - **Testing**: [How to verify]
+**Note**: Implementation steps should be organized into phases. Each phase contains multiple tasks with checkboxes to track progress. Each task should be broken down into detailed sub-tasks with individual checkboxes. Phases should be logically grouped and can be completed sequentially or in parallel where appropriate.
 
-2. **Task**: [Description]
-   - **Files**: [List of files to modify/create]
-   - **Dependencies**: [Any prerequisites]
-   - **Testing**: [How to verify]
+**Important**: An implementation plan is considered complete when all AI-actionable tasks are finished. Do NOT include human-only tasks such as:
+- Manual testing (beyond what can be automated)
+- Code review
+- Merging to main
+- Release activities
+
+These are post-implementation activities handled by humans. Focus only on tasks the AI can directly execute (code changes, automated test creation, documentation updates, etc.). When all AI-actionable tasks are complete, update the status to "✅ Complete" even if human activities remain.
+
+### Phase 1: [Phase Name]
+
+**Objective**: [What this phase accomplishes]
+
+- [ ] **Task 1**: [Description]
+  - [ ] [Sub-task 1: Specific action to take]
+  - [ ] [Sub-task 2: Specific action to take]
+  - [ ] [Sub-task 3: Specific action to take]
+  - [ ] [Additional sub-tasks as needed]
+  - **Files**: [List of files to modify/create]
+  - **Dependencies**: [Any prerequisites]
+  - **Testing**: [How to verify]
+  - **Notes**: [Any additional context]
+
+- [ ] **Task 2**: [Description]
+  - [ ] [Sub-task 1: Specific action to take]
+  - [ ] [Sub-task 2: Specific action to take]
+  - [ ] [Sub-task 3: Specific action to take]
+  - [ ] [Additional sub-tasks as needed]
+  - **Files**: [List of files to modify/create]
+  - **Dependencies**: [Any prerequisites]
+  - **Testing**: [How to verify]
+  - **Notes**: [Any additional context]
 
 ### Phase 2: [Phase Name]
-[Repeat structure as needed]
+
+**Objective**: [What this phase accomplishes]
+
+- [ ] **Task 1**: [Description]
+  - [ ] [Sub-task 1: Specific action to take]
+  - [ ] [Sub-task 2: Specific action to take]
+  - [ ] [Sub-task 3: Specific action to take]
+  - [ ] [Additional sub-tasks as needed]
+  - **Files**: [List of files to modify/create]
+  - **Dependencies**: [Any prerequisites]
+  - **Testing**: [How to verify]
+  - **Notes**: [Any additional context]
+
+- [ ] **Task 2**: [Description]
+  - [ ] [Sub-task 1: Specific action to take]
+  - [ ] [Sub-task 2: Specific action to take]
+  - [ ] [Sub-task 3: Specific action to take]
+  - [ ] [Additional sub-tasks as needed]
+  - **Files**: [List of files to modify/create]
+  - **Dependencies**: [Any prerequisites]
+  - **Testing**: [How to verify]
+  - **Notes**: [Any additional context]
+
+[Repeat structure for additional phases as needed]
 
 ## Files to Modify/Create
 - **New Files**:
@@ -178,9 +256,9 @@ Templates will be stored in a dedicated directory:
   - `path/to/existing_file.md` - [What changes]
 
 ## Testing Strategy
-- **Unit Tests**: [What to test at unit level]
-- **Integration Tests**: [What to test at integration level]
-- **Manual Testing**: [What to verify manually]
+- **Unit Tests**: [What to test at unit level - AI can create these]
+- **Integration Tests**: [What to test at integration level - AI can create these]
+- **Manual Testing**: [What to verify manually - informational only, not part of AI tasks]
 
 ## Breaking Changes
 - [List any breaking changes, or "None"]
@@ -194,13 +272,6 @@ Templates will be stored in a dedicated directory:
 - [ ] Add/update doc comments
 - [ ] Update examples (if applicable)
 
-## Rollout Plan
-- [ ] Implementation
-- [ ] Testing
-- [ ] Code review
-- [ ] Merge to main
-- [ ] Release notes
-
 ## Success Criteria
 - [Criterion 1]
 - [Criterion 2]
@@ -211,6 +282,7 @@ Templates will be stored in a dedicated directory:
   - **Mitigation**: [How to address]
 
 ## References
+- Related REQ_/BUG_ document: `plan/[week]/[REQ_|BUG_][name].md`
 - Related issues: #[issue-number]
 - Related PRs: #[pr-number]
 - Design documents: [links if applicable]
@@ -219,36 +291,45 @@ Templates will be stored in a dedicated directory:
 
 ## Integration with .cursorrules
 
-### Update Root `.cursorrules`
+The `.cursorrules` files should reference templates found in the `.cursor/templates/` directory. The following sections should be included in the appropriate `.cursorrules` files:
 
-Add a section referencing templates:
+### Root `.cursorrules`
+
+Include a section referencing templates:
 
 ```cursorrules
 ## Templates
-When generating change requests, bug reports, or implementation plans, reference the templates in `.cursor/templates/`:
-- Change requests: Use `.cursor/templates/change_request.md` as a guide
-- Bug reports: Use `.cursor/templates/bug_report.md` as a guide
-- Implementation plans: Use `.cursor/templates/implementation_plan.md` as a guide
+When generating REQ_, BUG_, or implementation plan documents, always reference and use the templates found in `.cursor/templates/`:
+- REQ_ documents: Read and follow `.cursor/templates/req_template.md` as a guide
+- BUG_ documents: Read and follow `.cursor/templates/bug_template.md` as a guide
+- Implementation plans: Read and follow `.cursor/templates/implementation_plan_template.md` as a guide
 Follow the template structure while adapting to the specific context.
+All documents should include a status header at the top (📋 Planned | 🟡 In Progress | ✅ Complete | ⏸️ Blocked).
+Implementation plans are created in `work/` folder with the same filename as the corresponding `plan/` document.
 ```
 
-### Update Plan Documents `.cursorrules`
+### `plan/.cursorrules`
 
-Enhance the existing `plan/.cursorrules` to reference templates:
+Include template usage guidance:
 
 ```cursorrules
 # Planning Documents Rules
 
 ## Document Structure
-- Start with context: current state, problem statement, or requirements
+- Use REQ_ prefix for requests, BUG_ prefix for bug reports
+- Include status header at the top: **Status**: 📋 Planned | 🟡 In Progress | ✅ Complete | ⏸️ Blocked
+- Start with Overview section: current state, problem statement, or requirements
 - Include clear task breakdowns
 - Provide implementation details and examples
 - Document benefits and considerations
 
 ## Template Usage
-- For implementation plans, use `.cursor/templates/implementation_plan.md` as a starting point
-- For change requests, use `.cursor/templates/change_request.md` as a starting point
+- Always read and reference templates from `.cursor/templates/` directory before generating documents
+- For REQ_ documents, read `.cursor/templates/req_template.md` and use it as a starting point
+- For BUG_ documents, read `.cursor/templates/bug_template.md` and use it as a starting point
+- For implementation plans, read `.cursor/templates/implementation_plan_template.md` and use it as a starting point
 - Adapt templates to the specific context while maintaining structure
+- Implementation plans are created in `work/` folder with the same filename as the `plan/` document
 
 ## Markdown Formatting
 - Use clear headings (## for main sections, ### for subsections)
@@ -270,50 +351,47 @@ Enhance the existing `plan/.cursorrules` to reference templates:
    - Create `.cursor/templates/` directory
    - Ensure directory is accessible (not in `.gitignore` if templates should be versioned)
 
-2. **Create change request template**
-   - Write `change_request.md` with the specified structure
+2. **Create REQ_ template**
+   - Write `req_template.md` with the specified structure
+   - Include status header format
    - Include all sections with clear placeholders
+   - Use `# REQ: [Title]` format
 
-3. **Create bug report template**
-   - Write `bug_report.md` with the specified structure
+3. **Create BUG_ template**
+   - Write `bug_template.md` with the specified structure
+   - Include status header format
    - Focus on reproducibility and context
+   - Use `# BUG: [Title]` format
 
 4. **Create implementation plan template**
-   - Write `implementation_plan.md` with the specified structure
+   - Write `implementation_plan_template.md` with the specified structure
+   - Include status header format
    - Emphasize actionable steps and file references
+   - Reference relationship to corresponding `plan/` document
+   - Add clarification that plans only include AI-actionable tasks (exclude human-only activities like code review, manual testing, merging)
+   - Do NOT include Rollout Plan section (human activities are post-implementation)
 
-5. **Update root `.cursorrules`**
-   - Add template reference section
-   - Ensure templates are discoverable by Cursor AI
-
-6. **Update `plan/.cursorrules`**
-   - Add template usage guidance
-   - Reference implementation plan template specifically
-
-7. **Test template usage**
-   - Verify Cursor AI can access and reference templates
-   - Test generating content using template structure
-   - Refine templates based on initial usage
-
-8. **Document template usage**
+5. **Document template usage**
    - Add brief documentation in README or DEVELOPMENT.md about template availability
    - Explain when and how to use templates
+   - Reference work document structure (see REQ_WORK_DOCUMENT_STRUCTURE.md)
 
 ## Benefits
 
-- **Consistency**: All AI-generated change requests, bug reports, and plans follow the same structure
-- **Completeness**: Templates ensure important information is not omitted
+- **Consistency**: All AI-generated REQ_, BUG_, and implementation plan documents follow the same structure
+- **Completeness**: Templates ensure important information is not omitted (including status headers)
 - **Efficiency**: AI can generate well-structured documents faster
 - **Maintainability**: Centralized templates are easier to update than scattered examples
 - **Onboarding**: New contributors see consistent documentation patterns
+- **Alignment**: Templates align with work document structure (REQ_/BUG_ prefixes, status tracking, `plan/` and `work/` folder relationship)
 
 ## Maintenance
 
 - Review templates quarterly or when documentation needs change
 - Update templates based on feedback from actual usage
-- Add new template types as needed (e.g., RFC template, design doc template)
 - Keep templates focused and avoid over-engineering
-- Ensure templates remain aligned with project conventions
+- Ensure templates remain aligned with work document structure (REQ_WORK_DOCUMENT_STRUCTURE.md)
+- Ensure status header format remains consistent
 
 ## Considerations
 
@@ -327,7 +405,11 @@ Enhance the existing `plan/.cursorrules` to reference templates:
 - Templates use markdown for readability and version control
 - Placeholders use `[brackets]` to indicate required information
 - Templates can be extended with project-specific sections as needed
-- Consider creating template variations for different contexts (e.g., simple vs. complex implementation plans)
+- All documents must include status header: `**Status**: 📋 Planned | 🟡 In Progress | ✅ Complete | ⏸️ Blocked`
+- REQ_ and BUG_ documents are created in `plan/` folder
+- Implementation plans are created in `work/` folder with the same filename as the corresponding `plan/` document
+- Implementation plans should reference their corresponding REQ_ or BUG_ document in the Context section
+- **Implementation plan scope**: Plans should only include AI-actionable tasks. A plan is complete when all AI tasks are finished, even if human activities (code review, manual testing, merging) remain. Do NOT include Rollout Plan section in templates.
 
 ## Related Documents
 

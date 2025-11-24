@@ -1,0 +1,21 @@
+# Implementation Plans Rules
+
+## Document Naming and Organization
+- Implementation plans MUST be placed in a subfolder of `work/` with the same name as the folder where the corresponding REQ_ or BUG_ is located
+- Filenames MUST be identical to the corresponding document in `plan/` folder
+- Organize by matching the folder structure from `plan/` (e.g., `plan/YYWW/` → `work/YYWW/`, `plan/XX_Backlog/` → `work/XX_Backlog/`)
+- Both REQ_ and BUG_ documents have matching implementation plans in `work/` folder
+- No `done/` folders - use status headers instead
+- See REQ_WORK_DOCUMENT_STRUCTURE.md for complete structure guidelines
+- Implementation plans are created after review/refinement and when requested by user
+
+## Relationship to Plan Documents
+- Each file in `work/` corresponds to a file in `plan/` with the same folder name and same filename
+- Always reference the corresponding `plan/` document at the beginning
+- Implementation plans should align with requirements/scope defined in `plan/` documents
+- Update status in both `plan/` and `work/` documents as work progresses
+
+## Template Usage
+- Always read and use `.cursor/templates/implementation_plan_template.md` before generating documents
+- Template defines all document structure, sections, formatting, and status header placement
+- Follow template structure exactly - do not add or remove sections

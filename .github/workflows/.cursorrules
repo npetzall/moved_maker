@@ -1,0 +1,26 @@
+# GitHub Workflows Rules
+
+## Workflow Structure
+- Use descriptive workflow names
+- Include clear job names and step descriptions
+- Use matrix strategies for cross-platform builds
+- Cache dependencies and build artifacts appropriately
+
+## Best Practices
+- Use `actions/checkout@v4` or later
+- Pin action versions (avoid `@main` or `@master`)
+- Use environment variables for secrets
+- Add appropriate permissions (minimal required)
+- Use `fail-fast: false` for matrix jobs when appropriate
+
+## Rust-Specific
+- Use `actions-rs/toolchain@v1` or `dtolnay/rust-toolchain` for Rust setup
+- Cache `~/.cargo/registry` and `~/.cargo/git`
+- Cache `target/` directory with appropriate keys
+- Use `cargo nextest` for test execution
+- Run `cargo deny check` and `cargo audit` for security
+
+## Artifacts
+- Name artifacts descriptively (include platform/architecture)
+- Upload test results for visibility
+- Use appropriate retention policies

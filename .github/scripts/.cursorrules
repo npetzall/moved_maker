@@ -1,0 +1,48 @@
+# GitHub Scripts Rules
+
+## Python Package Management
+- Use `uv` for Python package management and virtual environment handling
+- Create `pyproject.toml` or `requirements.txt` for dependencies
+- Use `uv sync` to install dependencies
+- Use `uv run` to execute scripts within the virtual environment
+
+## Testing
+- Use `pytest` for all Python tests
+- Write tests in `tests/` directory or alongside scripts with `test_` prefix
+- Use descriptive test function names: `test_<what>_<condition>_<expected_result>`
+- Run tests with `uv run pytest` or `pytest` if already in virtual environment
+- Use pytest fixtures for test setup and teardown
+- Aim for high test coverage
+
+## Code Style
+- Follow PEP 8 style guidelines
+- Use 4 spaces for indentation
+- Maximum line length: 100 characters
+- Use type hints for function parameters and return values
+- Use `black` for code formatting (if configured)
+- Use `ruff` or `flake8` for linting (if configured)
+
+## Script Structure
+- Use `#!/usr/bin/env python3` shebang for executable scripts
+- Include docstrings for modules, classes, and functions
+- Use `if __name__ == "__main__":` guard for script entry points
+- Handle errors gracefully with try/except blocks
+- Use logging instead of print statements for production scripts
+
+## Dependencies
+- Pin dependency versions in `pyproject.toml` or `requirements.txt`
+- Document why each dependency is needed
+- Keep dependencies minimal and focused
+- Update dependencies regularly for security patches
+
+## Dependabot Configuration
+- When adding Python dependencies, ensure Dependabot is configured to monitor them
+- Check `.github/dependabot.yml` for Python ecosystem entries
+- If missing, add a Dependabot entry for Python:
+  ```yaml
+  - package-ecosystem: "pip"
+    directory: "/.github/scripts"
+    schedule:
+      interval: "weekly"
+  ```
+- For `pyproject.toml`-based projects, use `package-ecosystem: "pip"` with the appropriate directory

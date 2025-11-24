@@ -8,17 +8,25 @@ When generating REQ_, BUG_, or implementation plan documents, always reference a
 - REQ_ documents: Read and follow `.cursor/templates/req_template.md` as a guide
 - BUG_ documents: Read and follow `.cursor/templates/bug_template.md` as a guide
 - Implementation plans: Read and follow `.cursor/templates/implementation_plan_template.md` as a guide
-Follow the template structure while adapting to the specific context.
-All documents should include a status header at the top (📋 Planned | 🟡 In Progress | ✅ Complete | ⏸️ Blocked).
-Implementation plans are created in `work/` folder with the same filename as the corresponding `plan/` document.
+Templates define all document structure, sections, formatting, and status header placement - follow them exactly.
 
 ## Work Documents - Where to Create Files
-- **REQ_ and BUG_ documents**: Create new documents in `plan/XX_Backlog/` first
+- **REQ_ documents**: Create new documents in `plan/XX_Backlog/` (literal folder name, not a placeholder)
   - Use `REQ_` prefix for requests (features, enhancements, modifications)
-  - Use `BUG_` prefix for bug reports
+  - Always use `.cursor/templates/req_template.md` as the template
   - See `plan/.cursorrules` for detailed structure, workflow, and templates
-- **Implementation plans**: Create in `work/` folder, same year-week directory and identical filename as `plan/` document
-  - Example: `plan/24W48/REQ_EXAMPLE.md` → `work/24W48/REQ_EXAMPLE.md`
+  - Note: `XX_Backlog` is primarily used by rules for new documents; year-week directories (e.g., `YYWW/`) are created manually by users
+- **BUG_ documents**: Create new documents in `plan/XX_Backlog/` first (literal folder name, not a placeholder)
+  - Use `BUG_` prefix for bug reports
+  - Always use `.cursor/templates/bug_template.md` as the template
+  - See `plan/.cursorrules` for detailed structure, workflow, and templates
+  - Note: `XX_Backlog` is primarily used by rules for new documents; year-week directories (e.g., `YYWW/`) are created manually by users
+- **Implementation plans**: When creating implementation plans for REQ_ or BUG_ documents (after review/refinement and when requested by user):
+  - Place in a subfolder of `work/` with the same name as the folder where the REQ_ or BUG_ is located
+  - Keep the same filename as the REQ_ or BUG_ document
+  - Always use `.cursor/templates/implementation_plan_template.md` as the template
+  - Example: `plan/YYWW/REQ_EXAMPLE.md` → `work/YYWW/REQ_EXAMPLE.md`
+  - Example: `plan/XX_Backlog/BUG_SOMETHING.md` → `work/XX_Backlog/BUG_SOMETHING.md`
   - See `work/.cursorrules` for detailed structure and templates
 
 ## Rust Conventions (Project-Wide)

@@ -1,0 +1,28 @@
+# Source Code Rules
+
+## Module Structure
+- Each file should contain a single logical module
+- Use `pub` sparingly - only expose what's necessary
+- Keep private implementation details private
+
+## Error Handling
+- Use `anyhow::Result` for functions that can fail
+- Use `?` operator for error propagation
+- Provide context with `.context()` when appropriate
+- Log warnings with `eprintln!()` for non-fatal errors
+
+## Type Safety
+- Prefer strong types over stringly-typed code
+- Use enums for state machines and variants
+- Leverage Rust's type system to prevent invalid states
+
+## Performance
+- Prefer iterators over manual loops
+- Use `Vec::with_capacity()` when size is known
+- Avoid unnecessary allocations
+- Use references (`&str`, `&Path`) instead of owned types when possible
+
+## Testing
+- Write tests alongside implementation
+- Test edge cases and error conditions
+- Use descriptive test names that explain what is being tested

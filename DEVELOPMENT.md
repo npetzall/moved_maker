@@ -484,7 +484,7 @@ The repository uses a `CODEOWNERS` file to define code ownership. When enabled i
 - Wait for workflows to complete
 - If still not appearing, check that workflow files are correctly configured
 
-For more detailed troubleshooting, see the [GitHub Configuration troubleshooting section](../work/01_Quality/06_GitHub_Configuration.md#troubleshooting).
+For more detailed troubleshooting, see the [GitHub Configuration troubleshooting section](../work/25W46/06_GitHub_Configuration.md#troubleshooting).
 
 ## Cursor AI Templates
 
@@ -508,9 +508,9 @@ Templates guide AI-generated documents and are referenced in `.cursorrules` file
 ### Document Organization
 
 For complete details on document structure, naming conventions, and workflow, see:
-- `plan/03_W48/REQ_WORK_DOCUMENT_STRUCTURE.md` - Work document structure and organization guidelines
-- `plan/03_W48/CURSORRULES.md` - Complete `.cursorrules` setup guide
-- `plan/03_W48/CURSOR_AI_TEMPLATES.md` - Template specifications and usage
+- `plan/25W48/REQ_WORK_DOCUMENT_STRUCTURE.md` - Work document structure and organization guidelines
+- `plan/25W48/REQ_CURSORRULES.md` - Complete `.cursorrules` setup guide
+- `plan/25W48/REQ_CURSOR_AI_TEMPLATES.md` - Template specifications and usage
 
 ### Template Maintenance
 

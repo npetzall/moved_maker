@@ -11,9 +11,19 @@ The current PR labeling workflow relies on bash scripts that use the gh CLI to i
 - Replace the labeling logic with a small Python project in `.github/scripts/pr-labels` using **uv** and the PyGithub package, matching the existing structure and style of other uv projects in `.github/scripts` (e.g., `release-notes` and `release-version`).
 - The project should follow the same pattern as existing uv projects:
   - Use `uv` for dependency management with a `pyproject.toml` file
+  - Include `pygithub>=2.0.0` as a dependency (matching existing scripts)
   - Follow the same directory structure (e.g., `src/` for source code, `tests/` for tests)
   - Include a `uv.lock` file for deterministic builds
   - **Write comprehensive tests** using pytest (configured in `pyproject.toml`)
+- **PyGithub Implementation Details:**
+  - Use PyGithub's `Github` class with `Auth.Token(token)` for authentication (matching the pattern in `release-version/src/release_version/github_client.py`)
+  - Use `repo.get_pull(pr_number)` to get the PR object
+  - Use `pr.get_commits()` to retrieve all commits in the PR (PyGithub handles pagination automatically)
+  - Use `pr.get_labels()` to check existing labels
+  - Use `pr.add_to_labels(label_name)` and `pr.remove_from_labels(label_name)` to manage labels
+  - Use `repo.get_label(label_name)` to check if a label exists, and `repo.create_label(name, color, description)` to create missing labels
+  - Handle `GithubException` for all GitHub API operations with appropriate error messages
+  - Consider creating a `GitHubClient` wrapper class similar to `release-version/src/release_version/github_client.py` for consistency and testability
 - The new labeler should:
   - Analyze all PR commits for Conventional Commit patterns and breaking changes;
   - Remove conflicting previous version labels;

@@ -44,3 +44,14 @@ updates:
       - npetzall
     assignees:
       - npetzall
+  - package-ecosystem: "pip"
+    directory: "/.github/scripts/pr-labels"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+    reviewers:
+      - npetzall
+    assignees:
+      - npetzall

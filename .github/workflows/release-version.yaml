@@ -71,6 +71,5 @@ jobs:
         run: |
           git add Cargo.toml Cargo.lock
           git commit -m "chore: bump version to ${{ steps.version.outputs.version }}"
-          git push origin HEAD:main
           git tag -a "${{ steps.version.outputs.tag_name }}" -m "Release ${{ steps.version.outputs.tag_name }}"
-          git push origin "${{ steps.version.outputs.tag_name }}"
+          git push origin HEAD:main "${{ steps.version.outputs.tag_name }}"

@@ -13,7 +13,13 @@
 - Each file in `work/` corresponds to a file in `plan/` with the same folder name and same filename
 - Always reference the corresponding `plan/` document at the beginning
 - Implementation plans should align with requirements/scope defined in `plan/` documents
-- Update status in both `plan/` and `work/` documents as work progresses
+
+## Status Synchronization
+- **When work starts**: Update both `plan/` and `work/` documents to "🟡 In Progress"
+- **During implementation**: When the status in the `work/` document changes, update the corresponding `plan/` document to match
+- **Status values**: Use the standard status format: 📋 Planned | 🟡 In Progress | ✅ Complete | ⏸️ Blocked
+- **Keep in sync**: The status in `plan/` and `work/` documents should always match during active work
+- **Completion**: When implementation is complete, update both documents to "✅ Complete"
 
 ## Template Usage
 - Always read and use `.cursor/templates/implementation_plan_template.md` before generating documents

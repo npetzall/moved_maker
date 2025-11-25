@@ -1,5 +1,7 @@
 # Add Dependabot Configuration for release-notes
 
+**Status**: ✅ Complete
+
 ## Description
 
 The `.github/scripts/release-notes` directory contains a Python project with dependencies managed via `pyproject.toml` and `uv.lock`. Currently, Dependabot is not configured to monitor and update these dependencies, unlike the similar `release-version` project which already has Dependabot configuration.

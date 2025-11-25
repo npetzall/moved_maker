@@ -58,11 +58,11 @@ def main() -> None:
             try:
                 with open(cargo_toml_path, "r", encoding="utf-8") as f:
                     cargo = tomlkit.parse(f.read())
-                package_name = cargo.get("package", {}).get("name", "move_maker")
+                package_name = cargo.get("package", {}).get("name", "moved_maker")
             except Exception as e:
                 print(f"Warning: Could not read package name from Cargo.toml: {e}", file=sys.stderr)
-                print("Using default package name: move_maker", file=sys.stderr)
-                package_name = "move_maker"
+                print("Using default package name: moved_maker", file=sys.stderr)
+                package_name = "moved_maker"
 
             try:
                 print(f"Updating Cargo.lock with version {version}...")

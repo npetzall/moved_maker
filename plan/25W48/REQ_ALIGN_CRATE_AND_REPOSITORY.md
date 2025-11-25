@@ -11,10 +11,11 @@ The crate name in Cargo.toml is currently set to `move_maker` while the reposito
 
 ## Tasks
 
-1. **Decide crate name strategy:**
-   - **Option A**: Rename the crate (`name = "move_maker"`) to `moved_maker` to match the repository
+1. **Decide crate name strategy:** ✅ **DECIDED: Option A**
+   - **Option A**: Rename the crate (`name = "move_maker"`) to `moved_maker` to match the repository ✅ **SELECTED**
      - Pros: Consistent naming, less confusion
      - Cons: Breaking change for existing users (if any), requires republishing
+     - **Decision Rationale**: Current version is 0.2.0 (< 1.0.0), so breaking changes are acceptable. Consistent naming improves user experience and reduces confusion.
    - **Option B**: Keep `move_maker` and document the mapping clearly in README
      - Pros: No breaking changes
      - Cons: Ongoing confusion, requires documentation maintenance

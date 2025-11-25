@@ -1,9 +1,13 @@
 [package]
-name = "move_maker"
+name = "moved_maker"
 version = "0.2.0"
 rust-version = "1.90.0"
 edition = "2024"
 license = "Apache-2.0"
+repository = "https://github.com/npetzall/moved_maker"
+description = "A CLI utility that parses Terraform files and generates moved blocks for refactoring resources into a submodule"
+keywords = ["terraform", "refactoring", "moved-blocks", "cli"]
+categories = ["command-line-utilities", "development-tools"]
 
 [dependencies]
 hcl-rs = "0.19.4"

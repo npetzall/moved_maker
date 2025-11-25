@@ -191,10 +191,10 @@ def add_installation_section(current_tag: str, repo_url: Optional[str] = None) -
         "",
         "Download the appropriate binary for your platform:",
         "",
-        f"- **Linux (x86_64)**: [`move_maker-linux-x86_64`]({repo_url}/releases/download/{current_tag}/move_maker-linux-x86_64)",
-        f"- **Linux (ARM64)**: [`move_maker-linux-aarch64`]({repo_url}/releases/download/{current_tag}/move_maker-linux-aarch64)",
-        f"- **macOS (Intel)**: [`move_maker-macos-x86_64`]({repo_url}/releases/download/{current_tag}/move_maker-macos-x86_64)",
-        f"- **macOS (Apple Silicon)**: [`move_maker-macos-aarch64`]({repo_url}/releases/download/{current_tag}/move_maker-macos-aarch64)",
+        f"- **Linux (x86_64)**: [`moved_maker-linux-x86_64`]({repo_url}/releases/download/{current_tag}/moved_maker-linux-x86_64)",
+        f"- **Linux (ARM64)**: [`moved_maker-linux-aarch64`]({repo_url}/releases/download/{current_tag}/moved_maker-linux-aarch64)",
+        f"- **macOS (Intel)**: [`moved_maker-macos-x86_64`]({repo_url}/releases/download/{current_tag}/moved_maker-macos-x86_64)",
+        f"- **macOS (Apple Silicon)**: [`moved_maker-macos-aarch64`]({repo_url}/releases/download/{current_tag}/moved_maker-macos-aarch64)",
     ]
 
     return "\n".join(lines)

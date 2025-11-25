@@ -5,7 +5,7 @@ use std::process::Command;
 use tempfile::TempDir;
 
 fn get_binary_path() -> PathBuf {
-    PathBuf::from(env!("CARGO_BIN_EXE_move_maker"))
+    PathBuf::from(env!("CARGO_BIN_EXE_moved_maker"))
 }
 
 #[test]

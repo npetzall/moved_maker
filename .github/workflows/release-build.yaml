@@ -102,10 +102,10 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            artifact_name: move_maker-linux-x86_64
+            artifact_name: moved_maker-linux-x86_64
           - os: macos-latest
             target: aarch64-apple-darwin
-            artifact_name: move_maker-macos-aarch64
+            artifact_name: moved_maker-macos-aarch64
     permissions:
       contents: write
     steps:
@@ -156,7 +156,7 @@ jobs:
 
       - name: Rename binary for platform-specific release
         run: |
-          mv target/${{ matrix.target }}/release/move_maker \
+          mv target/${{ matrix.target }}/release/moved_maker \
              target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
 
       - name: Install cargo-audit for binary auditing

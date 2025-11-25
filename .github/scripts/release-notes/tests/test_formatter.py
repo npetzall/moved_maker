@@ -122,8 +122,8 @@ class TestAddInstallationSection:
         result = formatter.add_installation_section("v1.2.0", "https://github.com/owner/repo")
         assert "📦 Installation" in result
         assert "v1.2.0" in result
-        assert "move_maker-linux-x86_64" in result
-        assert "move_maker-macos-aarch64" in result
+        assert "moved_maker-linux-x86_64" in result
+        assert "moved_maker-macos-aarch64" in result
 
 
 class TestGenerateMarkdown:

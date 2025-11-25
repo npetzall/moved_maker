@@ -7,6 +7,7 @@ on:
 
 jobs:
   version:
+    if: github.actor != 'moved-maker-release-app[bot]'
     runs-on: ubuntu-latest
     permissions:
       # Note: contents: read is intentional. The workflow uses a GitHub App token

@@ -17,7 +17,7 @@ use clap::Parser;
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
-#[command(name = "move_maker")]
+#[command(name = "moved_maker")]
 #[command(about = "Generate moved blocks for Terraform resources and data sources")]
 pub struct Args {
     /// Source directory containing Terraform files

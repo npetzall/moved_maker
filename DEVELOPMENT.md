@@ -8,12 +8,12 @@ This document covers how to build, run, test, and develop this project.
 cargo build --release
 ```
 
-The binary will be available at `target/release/move_maker`.
+The binary will be available at `target/release/moved_maker`.
 
 ## Usage
 
 ```bash
-move_maker --src <directory> --module-name <module_name>
+moved_maker --src <directory> --module-name <module_name>
 ```
 
 ### Arguments
@@ -33,7 +33,7 @@ resource "aws_instance" "web" {
 
 Running:
 ```bash
-move_maker --src . --module-name compute
+moved_maker --src . --module-name compute
 ```
 
 Will output:

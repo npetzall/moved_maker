@@ -2,6 +2,8 @@ Added from GitHub Issue: https://github.com/npetzall/moved_maker/issues/9
 
 When fixed it should be mentioned in git commit. Make sure implementation plan includes instructing the user to include "fixes #9" in commit message.
 
+**Status**: ✅ Complete
+
 The current PR labeling workflow relies on bash scripts that use the gh CLI to inspect PR commits and apply version bump labels. While this works, it introduces a few problems:
 
 - Bash parsing can be brittle and error-prone, especially with multi-line or unusual commit messages.

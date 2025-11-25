@@ -1,5 +1,7 @@
 # Bug: Release Notes Not Found During GitHub Release Creation
 
+**Status**: ✅ Complete
+
 ## Description
 
 The GitHub Release creation step fails because it cannot find the `release_notes.md` file. The file is generated in the wrong location - it's created in `.github/scripts/release-notes/` directory instead of the workspace root where the `gh release create` command expects it.

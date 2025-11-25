@@ -2,6 +2,8 @@ Added from GitHub Issue: https://github.com/npetzall/moved_maker/issues/8
 
 When fixed it should be mentioned in git commit. Make sure implementation plan includes instructing the user to include "fixes #8" in commit message.
 
+**Status**: ✅ Complete
+
 ## Current State
 
 The crate name in Cargo.toml is currently set to `move_maker` while the repository name is `moved_maker`. This can confuse users and tooling. Additionally, several key metadata fields are missing from Cargo.toml:

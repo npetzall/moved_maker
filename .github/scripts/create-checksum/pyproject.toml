@@ -1,7 +1,7 @@
 [project]
 name = "create-checksum"
 version = "0.1.0"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = []
 
 [project.optional-dependencies]

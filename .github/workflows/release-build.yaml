@@ -136,6 +136,19 @@ jobs:
           # Extract percentages and check thresholds using jq script
           jq -r -e -f .config/coverage-threshold-check.jq coverage.json || exit 1
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@d7d33e16d4ecbbea0da49ecb6fcc16df877ddac8  # v5
+
+      - name: Generate coverage summary
+        if: always()
+        run: |
+          # Generate markdown coverage summary for workflow run summary
+          # Summary includes overall coverage, Mermaid chart, and file breakdown
+          cd .github/scripts/coverage-summary
+          uv sync --extra dev
+          uv run python -m coverage_summary \
+            --json-path ../../../coverage.json || true
+
   build-and-release:
     needs: [check-tag, security, coverage]
     if: needs.check-tag.outputs.has_tag == 'true'

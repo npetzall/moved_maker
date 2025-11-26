@@ -1,18 +1,20 @@
-"""Entry point for release-version package."""
+"""Entry point for version package."""
 import os
 import subprocess
 import sys
 
 import tomlkit
 
-from release_version.cargo import update_cargo_version
-from release_version.github_client import GitHubClient
-from release_version.version import calculate_new_version
+from version.cargo import update_cargo_version
+from version.github_client import GitHubClient
+from version.version import calculate_new_version, calculate_pr_version
 
 
 def main() -> None:
     """Main execution logic."""
-    print("Starting version calculation...")
+    # Get version mode from environment (default to "release" for backward compatibility)
+    version_mode = os.environ.get("VERSION_MODE", "release").lower()
+    print(f"Version mode: {version_mode}")
 
     # Get GitHub token from environment (GITHUB_TOKEN is automatically available in GitHub Actions)
     token = os.environ.get("GITHUB_TOKEN")
@@ -38,13 +40,46 @@ def main() -> None:
     cargo_toml_path = os.environ.get("CARGO_TOML_PATH", "Cargo.toml")
     repo_root = os.path.dirname(cargo_toml_path) or "."
 
-    # Calculate new version (pass repo_root for reading current version)
-    try:
-        print("Calculating new version...")
-        version, tag_name = calculate_new_version(github_client, repo_path=repo_root)
-    except Exception as e:
-        print(f"Error calculating version: {e}", file=sys.stderr)
-        sys.exit(1)
+    # Calculate version based on mode
+    if version_mode == "pr":
+        # PR mode: Get PR number and commit SHA
+        pr_number_str = os.environ.get("PR_NUMBER")
+        if not pr_number_str:
+            print("Error: PR_NUMBER environment variable not set (required for PR mode)", file=sys.stderr)
+            sys.exit(1)
+
+        try:
+            pr_number = int(pr_number_str)
+        except ValueError:
+            print(f"Error: Invalid PR_NUMBER: {pr_number_str} (must be an integer)", file=sys.stderr)
+            sys.exit(1)
+
+        commit_sha = os.environ.get("COMMIT_SHA")
+        if not commit_sha:
+            print("Error: COMMIT_SHA environment variable not set (required for PR mode)", file=sys.stderr)
+            sys.exit(1)
+
+        # Calculate PR version
+        try:
+            print("Calculating PR version...")
+            version = calculate_pr_version(
+                github_client, pr_number, commit_sha, repo_path=repo_root
+            )
+            tag_name = f"v{version}"  # For consistency, though not used in PR mode
+        except Exception as e:
+            print(f"Error calculating PR version: {e}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        # Release mode: Use existing logic
+        if version_mode != "release":
+            print(f"Warning: Unknown VERSION_MODE '{version_mode}', defaulting to 'release'", file=sys.stderr)
+
+        try:
+            print("Calculating new version...")
+            version, tag_name = calculate_new_version(github_client, repo_path=repo_root)
+        except Exception as e:
+            print(f"Error calculating version: {e}", file=sys.stderr)
+            sys.exit(1)
 
     # Update Cargo.toml (use full path)
     try:
@@ -85,10 +120,15 @@ def main() -> None:
         print(f"Error updating Cargo.toml: {e}", file=sys.stderr)
         sys.exit(1)
 
-    # Only output to GITHUB_OUTPUT/console if version was updated
-    if not version_updated:
-        print("Version unchanged, skipping output")
-        sys.exit(0)
+    # Output behavior differs by mode
+    if version_mode == "pr":
+        # PR mode: Always output version (even if unchanged)
+        print(f"PR version calculated: {version}")
+    else:
+        # Release mode: Only output if version was updated
+        if not version_updated:
+            print("Version unchanged, skipping output")
+            sys.exit(0)
 
     # Output to GITHUB_OUTPUT
     output_file = os.environ.get("GITHUB_OUTPUT")

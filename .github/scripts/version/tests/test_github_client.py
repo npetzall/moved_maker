@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from github import GithubException
 
-from release_version.github_client import GitHubClient
+from version.github_client import GitHubClient
 
 
 def test_github_client_init():

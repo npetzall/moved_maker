@@ -216,6 +216,109 @@ jobs:
               --json-path ../../../coverage.json || true
           fi
 
+  version:
+    needs: coverage
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+        with:
+          fetch-depth: 0  # Full history needed for version calculation
+
+      - name: Fetch all tags
+        run: git fetch --tags --force
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@d7d33e16d4ecbbea0da49ecb6fcc16df877ddac8  # v5
+        with:
+          python-version: "3.13"
+
+      - name: Calculate PR version
+        id: version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          CARGO_TOML_PATH: ${{ github.workspace }}/Cargo.toml
+          VERSION_MODE: pr
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          cd .github/scripts/version
+          uv run python -m version
+
+  build-binaries:
+    needs: version
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            platform: linux-x86_64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            platform: macos-aarch64
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331  # master
+        with:
+          toolchain: 1.90.0
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@f13886b937689c021905a6b90929199931d60db1  # v2.8.1
+        with:
+          shared-key: "rust-cache"
+          cache-targets: true
+          cache-on-failure: false
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Rename binary with version
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          mv target/${{ matrix.target }}/release/moved_maker \
+             target/${{ matrix.target }}/release/moved_maker-${VERSION}-${{ matrix.platform }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@d7d33e16d4ecbbea0da49ecb6fcc16df877ddac8  # v5
+        with:
+          python-version: "3.13"
+
+      - name: Create checksum
+        run: |
+          VERSION="${{ needs.version.outputs.version }}"
+          cd .github/scripts/create-checksum
+          uv run python -m create_checksum \
+            --file ../../target/${{ matrix.target }}/release/moved_maker-${VERSION}-${{ matrix.platform }} \
+            --algo sha256 \
+            --output ../../target/${{ matrix.target }}/release/moved_maker-${VERSION}-${{ matrix.platform }}.sha256
+
+      - name: Install cargo-nextest
+        run: cargo install cargo-nextest
+
+      - name: Generate test summary
+        if: always()
+        run: |
+          cd .github/scripts/test-summary
+          uv run python -m test_summary \
+            --xml-path ../../../target/nextest/**/test-results.xml \
+            --artifact-name test-results-pr-${{ matrix.platform }}
+
+      - name: Upload binary and checksum as artifacts
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+        with:
+          name: moved_maker-${{ needs.version.outputs.version }}-${{ matrix.platform }}
+          path: |
+            target/${{ matrix.target }}/release/moved_maker-${{ needs.version.outputs.version }}-${{ matrix.platform }}
+            target/${{ matrix.target }}/release/moved_maker-${{ needs.version.outputs.version }}-${{ matrix.platform }}.sha256
+          retention-days: 7
+
   pre-commit:
     needs: test-ubuntu
     runs-on: ubuntu-latest

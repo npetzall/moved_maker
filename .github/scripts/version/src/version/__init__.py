@@ -1,0 +1,1 @@
+"""Version calculation package."""

@@ -147,7 +147,6 @@ jobs:
           # Generate markdown coverage summary for workflow run summary
           # Summary includes overall coverage, Mermaid chart, and file breakdown
           cd .github/scripts/coverage-summary
-          uv sync --extra dev
           uv run python -m coverage_summary \
             --json-path ../../../coverage.json || true
 
@@ -199,7 +198,6 @@ jobs:
         if: always()
         run: |
           cd .github/scripts/test-summary
-          uv sync --extra dev
           uv run python -m test_summary \
             --xml-path ../../../target/nextest/**/test-results.xml \
             --artifact-name test-results-${{ matrix.os }}-${{ matrix.target }}

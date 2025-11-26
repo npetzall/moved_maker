@@ -70,6 +70,18 @@ jobs:
       - name: Run tests
         run: cargo nextest run
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@d7d33e16d4ecbbea0da49ecb6fcc16df877ddac8  # v5
+
+      - name: Generate test summary
+        if: always()
+        run: |
+          cd .github/scripts/test-summary
+          uv sync --extra dev
+          uv run python -m test_summary \
+            --xml-path ../../../target/nextest/**/test-results.xml \
+            --artifact-name test-results-ubuntu-latest
+
       - name: Upload test results
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         if: always()
@@ -102,6 +114,18 @@ jobs:
 
       - name: Run tests
         run: cargo nextest run
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@d7d33e16d4ecbbea0da49ecb6fcc16df877ddac8  # v5
+
+      - name: Generate test summary
+        if: always()
+        run: |
+          cd .github/scripts/test-summary
+          uv sync --extra dev
+          uv run python -m test_summary \
+            --xml-path ../../../target/nextest/**/test-results.xml \
+            --artifact-name test-results-macos-latest
 
       - name: Upload test results
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0

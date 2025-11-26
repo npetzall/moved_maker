@@ -45,6 +45,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@ed21f2f24f8dd64503750218de024bcf64c7250a  # v5
+        with:
+          python-version: "3.13"
 
       - name: Calculate version from PR labels
         id: version

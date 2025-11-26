@@ -237,9 +237,11 @@ jobs:
 
       - name: Create checksum
         run: |
-          python3 .github/scripts/create-checksum.py \
-            target/${{ matrix.target }}/release/${{ matrix.artifact_name }} \
-            target/${{ matrix.target }}/release/${{ matrix.artifact_name }}.sha256
+          cd .github/scripts/create-checksum
+          uv run python -m create_checksum \
+            --file ../../target/${{ matrix.target }}/release/${{ matrix.artifact_name }} \
+            --algo sha256 \
+            --output ../../target/${{ matrix.target }}/release/${{ matrix.artifact_name }}.sha256
 
       - name: Upload artifact (binary and checksum)
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0

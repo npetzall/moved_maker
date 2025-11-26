@@ -179,6 +179,40 @@ jobs:
           # Extract percentages and check thresholds using jq script
           jq -r -e -f .config/coverage-threshold-check.jq coverage.json || exit 1
 
+      - name: Detect changed files
+        id: changed_files
+        run: |
+          # Get changed Rust source files in PR for coverage summary
+          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }} || true
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '\.rs$' | grep '^src/' || true)
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "$CHANGED_FILES" > changed-files.txt
+            echo "Changed files detected:"
+            echo "$CHANGED_FILES"
+          else
+            touch changed-files.txt
+            echo "No changed Rust source files detected"
+          fi
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@d7d33e16d4ecbbea0da49ecb6fcc16df877ddac8  # v5
+
+      - name: Generate coverage summary
+        if: always()
+        run: |
+          # Generate markdown coverage summary for workflow run summary
+          # Summary includes overall coverage, Mermaid chart, and file breakdown
+          cd .github/scripts/coverage-summary
+          uv sync --extra dev
+          if [ -s ../../../changed-files.txt ]; then
+            uv run python -m coverage_summary \
+              --json-path ../../../coverage.json \
+              --changed-files ../../../changed-files.txt || true
+          else
+            uv run python -m coverage_summary \
+              --json-path ../../../coverage.json || true
+          fi
+
   pre-commit:
     needs: test-ubuntu
     runs-on: ubuntu-latest

@@ -1,5 +1,5 @@
 [project]
-name = "release-version"
+name = "version"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
@@ -26,12 +26,12 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
-    "--cov=src/release_version",
+    "--cov=src/version",
     "--cov-report=term-missing",
 ]
 
 [tool.coverage.run]
-source = ["src/release_version"]
+source = ["src/version"]
 
 [tool.coverage.report]
 exclude_lines = [

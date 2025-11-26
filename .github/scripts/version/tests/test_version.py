@@ -4,13 +4,15 @@ from unittest.mock import MagicMock, patch
 import pytest
 from packaging.version import InvalidVersion
 
-from release_version.version import (
+from version.version import (
     calculate_new_version,
+    calculate_pr_version,
     calculate_version,
     determine_bump_type,
     get_commit_count,
     get_latest_tag,
     get_tag_timestamp,
+    shorten_commit_sha,
 )
 
 
@@ -156,7 +158,7 @@ def test_calculate_new_version_invalid_tag():
     """Test calculate_new_version with invalid tag version format."""
     mock_github_client = MagicMock()
 
-    with patch("release_version.version.get_latest_tag") as mock_get_tag:
+    with patch("version.version.get_latest_tag") as mock_get_tag:
         mock_get_tag.return_value = "vinvalid-version-string"
 
         with pytest.raises(ValueError, match="Invalid version format in git tag"):
@@ -168,10 +170,10 @@ def test_calculate_new_version_valid_tag():
     mock_github_client = MagicMock()
     mock_github_client.get_merged_prs_since.return_value = []
 
-    with patch("release_version.version.get_latest_tag") as mock_get_tag, patch(
-        "release_version.version.get_tag_timestamp"
+    with patch("version.version.get_latest_tag") as mock_get_tag, patch(
+        "version.version.get_tag_timestamp"
     ) as mock_timestamp, patch(
-        "release_version.version.get_commit_count"
+        "version.version.get_commit_count"
     ) as mock_commit_count:
         mock_get_tag.return_value = "v1.0.0"
         mock_timestamp.return_value = 1234567890
@@ -186,10 +188,10 @@ def test_calculate_new_version_first_release_invalid_cargo_version():
     """Test calculate_new_version first release with invalid Cargo.toml version."""
     mock_github_client = MagicMock()
 
-    with patch("release_version.version.get_latest_tag") as mock_get_tag:
+    with patch("version.version.get_latest_tag") as mock_get_tag:
         mock_get_tag.return_value = None  # No tags - first release
 
-        with patch("release_version.version.read_cargo_version") as mock_read:
+        with patch("version.version.read_cargo_version") as mock_read:
             mock_read.side_effect = ValueError(
                 "Invalid version format in Cargo.toml: invalid-version. Expected semantic version (e.g., 1.0.0)"
             )
@@ -206,3 +208,100 @@ def test_calculate_version_validates_output():
     new_version = calculate_version("1.0.0", "MAJOR", 0)
     assert new_version == "2.0.0"
     # If validation fails, an exception would be raised above
+
+
+def test_shorten_commit_sha_default_length():
+    """Test shortening commit SHA with default length."""
+    sha = "abc1234567890def1234567890abc1234567890"
+    shortened = shorten_commit_sha(sha)
+    assert shortened == "abc1234"
+    assert len(shortened) == 7
+
+
+def test_shorten_commit_sha_custom_length():
+    """Test shortening commit SHA with custom length."""
+    sha = "abc1234567890def1234567890abc1234567890"
+    shortened = shorten_commit_sha(sha, length=10)
+    assert shortened == "abc1234567"
+    assert len(shortened) == 10
+
+
+def test_shorten_commit_sha_short_input():
+    """Test shortening commit SHA when input is shorter than requested length."""
+    sha = "abc123"
+    shortened = shorten_commit_sha(sha, length=10)
+    assert shortened == "abc123"
+    assert len(shortened) == 6
+
+
+def test_shorten_commit_sha_empty():
+    """Test shortening commit SHA with empty input."""
+    with pytest.raises(ValueError, match="Commit SHA cannot be empty"):
+        shorten_commit_sha("")
+
+
+def test_shorten_commit_sha_invalid_length():
+    """Test shortening commit SHA with invalid length."""
+    with pytest.raises(ValueError, match="Length must be at least 1"):
+        shorten_commit_sha("abc123", length=0)
+
+
+def test_shorten_commit_sha_invalid_format():
+    """Test shortening commit SHA with invalid format."""
+    with pytest.raises(ValueError, match="Invalid SHA format"):
+        shorten_commit_sha("abc-123")
+
+
+def test_calculate_pr_version_valid():
+    """Test calculating PR version with valid inputs."""
+    mock_github_client = MagicMock()
+    mock_github_client.get_merged_prs_since.return_value = []
+
+    with patch("version.version.get_latest_tag") as mock_get_tag, patch(
+        "version.version.get_tag_timestamp"
+    ) as mock_timestamp, patch(
+        "version.version.get_commit_count"
+    ) as mock_commit_count:
+        mock_get_tag.return_value = "v1.0.0"
+        mock_timestamp.return_value = 1234567890
+        mock_commit_count.return_value = 2
+
+        pr_version = calculate_pr_version(
+            mock_github_client, pr_number=123, commit_sha="abc1234567890def1234567890abc1234567890", repo_path="."
+        )
+        # Should be: base version (1.0.2) + pr123 + short SHA (abc1234)
+        assert pr_version == "1.0.2-pr123+abc1234"
+
+
+def test_calculate_pr_version_first_release():
+    """Test calculating PR version when no tags exist (first release scenario)."""
+    mock_github_client = MagicMock()
+    mock_github_client.get_merged_prs_since.return_value = []
+
+    with patch("version.version.get_latest_tag") as mock_get_tag, patch(
+        "version.version.read_cargo_version"
+    ) as mock_read_cargo:
+        mock_get_tag.return_value = None
+        mock_read_cargo.return_value = "0.1.0"
+
+        pr_version = calculate_pr_version(
+            mock_github_client, pr_number=456, commit_sha="def9876543210abc9876543210def9876543210", repo_path="."
+        )
+        # Should be: base version (0.1.0) + pr456 + short SHA (def9876)
+        assert pr_version == "0.1.0-pr456+def9876"
+
+
+def test_calculate_pr_version_invalid_pr_number():
+    """Test calculating PR version with invalid PR number."""
+    mock_github_client = MagicMock()
+
+    with pytest.raises(ValueError, match="PR number must be positive"):
+        calculate_pr_version(mock_github_client, pr_number=0, commit_sha="abc123", repo_path=".")
+
+
+def test_calculate_pr_version_empty_sha():
+    """Test calculating PR version with empty commit SHA."""
+    mock_github_client = MagicMock()
+
+    with pytest.raises(ValueError, match="Commit SHA cannot be empty"):
+        calculate_pr_version(mock_github_client, pr_number=123, commit_sha="", repo_path=".")

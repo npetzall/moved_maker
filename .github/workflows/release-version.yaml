@@ -55,8 +55,8 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           CARGO_TOML_PATH: ${{ github.workspace }}/Cargo.toml
         run: |
-          cd .github/scripts/release-version
-          uv run python -m release_version
+          cd .github/scripts/version
+          uv run python -m version
 
       - name: Check if version changed
         id: version-changed

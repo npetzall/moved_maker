@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from release_version.cargo import read_cargo_version, update_cargo_version
+from version.cargo import read_cargo_version, update_cargo_version
 
 
 def test_read_cargo_version_valid(temp_cargo_toml):

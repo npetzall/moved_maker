@@ -6,7 +6,32 @@ from typing import Optional, Tuple
 from packaging import version as packaging_version
 from packaging.version import InvalidVersion, Version
 
-from release_version.cargo import read_cargo_version
+from version.cargo import read_cargo_version
+
+
+def shorten_commit_sha(sha: str, length: int = 7) -> str:
+    """Shorten commit SHA to specified length.
+
+    Args:
+        sha: Full commit SHA string
+        length: Desired length of shortened SHA (default: 7)
+
+    Returns:
+        Shortened SHA string
+
+    Raises:
+        ValueError: If SHA format is invalid or length is invalid
+    """
+    if not sha:
+        raise ValueError("Commit SHA cannot be empty")
+    if length < 1:
+        raise ValueError(f"Length must be at least 1, got {length}")
+    if not sha.isalnum():
+        raise ValueError(f"Invalid SHA format: {sha} (must be alphanumeric)")
+
+    # Ensure we don't exceed the SHA length (40 characters for full SHA)
+    actual_length = min(length, len(sha))
+    return sha[:actual_length]
 
 
 def get_latest_tag() -> Optional[str]:
@@ -263,3 +288,105 @@ def calculate_new_version(
     print("=" * 50)
 
     return (new_version, f"v{new_version}")
+
+
+def calculate_pr_version(
+    github_client,
+    pr_number: int,
+    commit_sha: str,
+    repo_path: str = ".",
+) -> str:
+    """Calculate PR version with pre-release identifier and build metadata.
+
+    Uses the same logic as release version calculation (bump type from PR labels,
+    commit count) but formats as semantic version with pre-release `pr[PR-NUMBER]`
+    and build metadata `[SHORT-SHA]`.
+
+    Args:
+        github_client: GitHubClient instance
+        pr_number: Pull request number
+        commit_sha: Full commit SHA
+        repo_path: Path to repository root (for reading Cargo.toml)
+
+    Returns:
+        PR version string in format: X.Y.Z-pr[NUMBER]+[SHORT-SHA] (e.g., "1.2.3-pr123+abc1234")
+
+    Raises:
+        ValueError: If version calculation fails, or if PR number or SHA is invalid
+    """
+    if pr_number < 1:
+        raise ValueError(f"PR number must be positive, got {pr_number}")
+    if not commit_sha:
+        raise ValueError("Commit SHA cannot be empty")
+
+    # Get base version using same logic as release
+    latest_tag = get_latest_tag()
+    cargo_path = f"{repo_path}/Cargo.toml" if repo_path != "." else "Cargo.toml"
+
+    # Determine base version and timestamp based on whether tag exists
+    if not latest_tag:
+        print("No tags found - using Cargo.toml version as base")
+        base_version = read_cargo_version(cargo_path)
+        print(f"Base version from Cargo.toml: {base_version}")
+        tag_timestamp = 0
+        tag_for_commit_count = None
+    else:
+        print(f"Found latest tag: {latest_tag}")
+        base_version = latest_tag.lstrip("v")
+        print(f"Base version: {base_version}")
+
+        # Validate tag version format
+        try:
+            Version(base_version)
+        except InvalidVersion as e:
+            raise ValueError(
+                f"Invalid version format in git tag '{latest_tag}': {base_version}. "
+                "Expected semantic version (e.g., 1.0.0)"
+            ) from e
+
+        tag_timestamp = get_tag_timestamp(latest_tag)
+        tag_for_commit_count = latest_tag
+
+    # Get merged PRs since tag (or all PRs if timestamp is 0)
+    prs = github_client.get_merged_prs_since(tag_timestamp)
+
+    # Determine bump type
+    bump_type = determine_bump_type(prs)
+
+    # Get commit count for patch bump
+    if bump_type == "PATCH":
+        commit_count = get_commit_count(tag_for_commit_count)
+    else:
+        commit_count = 0
+
+    # Calculate base version (without pre-release/build metadata)
+    base_new_version = calculate_version(base_version, bump_type, commit_count)
+
+    # Shorten commit SHA for build metadata
+    short_sha = shorten_commit_sha(commit_sha)
+
+    # Format as semantic version with pre-release and build metadata
+    pr_version = f"{base_new_version}-pr{pr_number}+{short_sha}"
+
+    # Validate the full PR version format
+    try:
+        # Note: packaging.version.Version doesn't support build metadata in pre-release,
+        # but we can validate the base version and format separately
+        Version(base_new_version)
+    except InvalidVersion as e:
+        raise ValueError(f"Invalid calculated base version: {base_new_version}") from e
+
+    # Log comprehensive summary
+    print("=" * 50)
+    print("PR Version Calculation Summary:")
+    print(f"  Base version: {base_version}")
+    print(f"  Bump type: {bump_type}")
+    if bump_type == "PATCH":
+        print(f"  Commit count: {commit_count}")
+    print(f"  Calculated base version: {base_new_version}")
+    print(f"  PR number: {pr_number}")
+    print(f"  Commit SHA: {commit_sha} (shortened to {short_sha})")
+    print(f"  PR version: {pr_version}")
+    print("=" * 50)
+
+    return pr_version

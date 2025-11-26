@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: cache-build
+  cancel-in-progress: false
+
 jobs:
   build-cache:
     runs-on: ${{ matrix.os }}

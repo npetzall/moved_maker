@@ -1,23 +1,64 @@
 name: Release Build
 
+# This workflow is triggered via workflow_run when cache-build completes (success or failure).
+# It checks if the commit has a version tag (v[MAJOR].[MINOR].[PATCH]) and only runs release jobs if a tag is found.
+# When release-version workflow skips commit/tag creation (version unchanged), cache-build still runs
+# but release-build correctly skips all jobs (expected behavior).
+# Direct tag pushes no longer trigger this workflow - all releases must go through main branch workflow coordination.
+
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_run:
+    workflows: ["Cache Build"]
+    types: [completed]
+    branches: [main]
 
 jobs:
+  check-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      has_tag: ${{ steps.check.outputs.has_tag }}
+      tag_name: ${{ steps.check.outputs.tag_name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0  # Full history needed for tags
+
+      # Tag detection: Check if commit has a version tag (v[MAJOR].[MINOR].[PATCH] format).
+      # Errors break the build - use set -e to ensure failures are caught.
+      # If multiple tags exist, only the first matching tag is used (head -n 1).
+      - name: Check for version tag
+        id: check
+        run: |
+          set -e
+          git fetch --tags --force
+          TAG_NAME=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 || true)
+          if [ -n "$TAG_NAME" ]; then
+            echo "has_tag=true" >> $GITHUB_OUTPUT
+            echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+            echo "Found tag: $TAG_NAME"
+          else
+            echo "has_tag=false" >> $GITHUB_OUTPUT
+            echo "tag_name=" >> $GITHUB_OUTPUT
+            echo "No version tag found for this commit"
+          fi
+
   security:
+    needs: check-tag
+    if: needs.check-tag.outputs.has_tag == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@0b1efabc08b657293548b77fb76cc02d26091c7e  # master
         with:
           toolchain: 1.90.0
+          components: clippy rustfmt
 
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5  # v2.8.2
         with:
@@ -49,13 +90,14 @@ jobs:
           if-no-files-found: warn
 
   coverage:
-    needs: security
+    needs: [check-tag, security]
+    if: needs.check-tag.outputs.has_tag == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@0b1efabc08b657293548b77fb76cc02d26091c7e  # master
@@ -95,7 +137,8 @@ jobs:
           jq -r -e -f .config/coverage-threshold-check.jq coverage.json || exit 1
 
   build-and-release:
-    needs: [security, coverage]
+    needs: [check-tag, security, coverage]
+    if: needs.check-tag.outputs.has_tag == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -112,7 +155,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@0b1efabc08b657293548b77fb76cc02d26091c7e  # master
@@ -183,7 +226,8 @@ jobs:
           retention-days: 1
 
   release:
-    needs: build-and-release
+    needs: [check-tag, build-and-release]
+    if: needs.check-tag.outputs.has_tag == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -191,7 +235,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0  # Full history needed for git rev-list path filtering
 
       - name: Install uv
@@ -202,7 +246,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_REF_NAME: ${{ needs.check-tag.outputs.tag_name }}
         run: |
           cd .github/scripts/release-notes
           uv run python -m release_notes
@@ -225,8 +269,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${{ github.ref_name }}" \
-            --title "Release ${{ github.ref_name }}" \
+          gh release create "${{ needs.check-tag.outputs.tag_name }}" \
+            --title "Release ${{ needs.check-tag.outputs.tag_name }}" \
             --notes-file release_notes.md \
             --verify-tag \
             artifacts/*

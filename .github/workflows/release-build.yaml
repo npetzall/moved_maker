@@ -15,7 +15,7 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331  # master
+        uses: dtolnay/rust-toolchain@0b1efabc08b657293548b77fb76cc02d26091c7e  # master
         with:
           toolchain: 1.90.0
 
@@ -58,7 +58,7 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331  # master
+        uses: dtolnay/rust-toolchain@0b1efabc08b657293548b77fb76cc02d26091c7e  # master
         with:
           toolchain: 1.90.0
           components: llvm-tools-preview
@@ -115,7 +115,7 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@0f44b27771c32bda9f458f75a1e241b09791b331  # master
+        uses: dtolnay/rust-toolchain@0b1efabc08b657293548b77fb76cc02d26091c7e  # master
         with:
           toolchain: 1.90.0
           targets: ${{ matrix.target }}

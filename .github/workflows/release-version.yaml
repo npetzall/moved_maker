@@ -43,7 +43,7 @@ jobs:
         run: git fetch --tags --force
 
       - name: Install uv
-        uses: astral-sh/setup-uv@d7d33e16d4ecbbea0da49ecb6fcc16df877ddac8  # v5
+        uses: astral-sh/setup-uv@ed21f2f24f8dd64503750218de024bcf64c7250a  # v5
 
       - name: Calculate version from PR labels
         id: version

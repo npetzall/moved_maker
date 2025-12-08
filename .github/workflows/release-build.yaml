@@ -195,7 +195,7 @@ jobs:
           fetch-depth: 0  # Full history needed for git rev-list path filtering
 
       - name: Install uv
-        uses: astral-sh/setup-uv@d7d33e16d4ecbbea0da49ecb6fcc16df877ddac8  # v5
+        uses: astral-sh/setup-uv@ed21f2f24f8dd64503750218de024bcf64c7250a  # v5
 
       - name: Generate release notes
         id: release_notes

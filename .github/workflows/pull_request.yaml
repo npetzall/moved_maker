@@ -20,6 +20,12 @@ jobs:
         with:
           shared-key: "rust-cache"
 
+      - name: Install cargo-llvm-cov (for caching)
+        run: cargo install cargo-llvm-cov
+
+      - name: Install cargo-nextest (for caching)
+        run: cargo install cargo-nextest
+
       - name: Install security tools
         run: cargo install cargo-deny cargo-audit cargo-auditable
 

@@ -286,6 +286,8 @@ def calculate_new_version(
         print(f"  Commit count: {commit_count}")
     print(f"  Calculated version: {new_version}")
     print("=" * 50)
+    # Flush stdout to ensure summary appears before function returns
+    sys.stdout.flush()
 
     return (new_version, f"v{new_version}")
 
@@ -388,5 +390,7 @@ def calculate_pr_version(
     print(f"  Commit SHA: {commit_sha} (shortened to {short_sha})")
     print(f"  PR version: {pr_version}")
     print("=" * 50)
+    # Flush stdout to ensure summary appears before function returns
+    sys.stdout.flush()
 
     return pr_version

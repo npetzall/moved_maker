@@ -56,7 +56,7 @@ def read_cargo_version(path: str = "Cargo.toml") -> str:
 
         return version
     except tomlkit.exceptions.TOMLKitError as e:
-        print(f"Error parsing Cargo.toml: {e}", file=sys.stderr)
+        print(f"Error parsing Cargo.toml: {e}")
         raise ValueError(f"Invalid TOML format: {e}") from e
 
 
@@ -117,5 +117,5 @@ def update_cargo_version(path: str = "Cargo.toml", version: str = "") -> bool:
         print(f"Updated Cargo.toml version from {current_version} to {version}")
         return True
     except tomlkit.exceptions.TOMLKitError as e:
-        print(f"Error parsing Cargo.toml: {e}", file=sys.stderr)
+        print(f"Error parsing Cargo.toml: {e}")
         raise ValueError(f"Invalid TOML format: {e}") from e

@@ -34,7 +34,7 @@ class GitHubClient:
             try:
                 self._repo = self.github.get_repo(self.repo_name)
             except GithubException as e:
-                print(f"Error accessing repository {self.repo_name}: {e}", file=sys.stderr)
+                print(f"Error accessing repository {self.repo_name}: {e}")
                 raise
         return self._repo
 
@@ -80,5 +80,5 @@ class GitHubClient:
             print(f"Found {len(prs)} merged PR(s) to analyze")
             return prs
         except GithubException as e:
-            print(f"Error getting merged PRs: {e}", file=sys.stderr)
+            print(f"Error getting merged PRs: {e}")
             raise

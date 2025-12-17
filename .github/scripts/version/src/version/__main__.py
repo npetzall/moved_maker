@@ -66,6 +66,8 @@ def main() -> None:
                 github_client, pr_number, commit_sha, repo_path=repo_root
             )
             tag_name = f"v{version}"  # For consistency, though not used in PR mode
+            # Flush stdout to ensure calculation output appears before any errors
+            sys.stdout.flush()
         except Exception as e:
             print(f"Error calculating PR version: {e}", file=sys.stderr)
             sys.exit(1)
@@ -77,6 +79,8 @@ def main() -> None:
         try:
             print("Calculating new version...")
             version, tag_name = calculate_new_version(github_client, repo_path=repo_root)
+            # Flush stdout to ensure calculation output appears before any errors
+            sys.stdout.flush()
         except Exception as e:
             print(f"Error calculating version: {e}", file=sys.stderr)
             sys.exit(1)
@@ -117,6 +121,8 @@ def main() -> None:
         else:
             print(f"ℹ Cargo.toml already at version {version}, no update needed")
     except Exception as e:
+        # Flush stdout to ensure calculation output appears before error message
+        sys.stdout.flush()
         print(f"Error updating Cargo.toml: {e}", file=sys.stderr)
         sys.exit(1)
 
@@ -150,5 +156,7 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
+        # Flush stdout to ensure any buffered output appears before error message
+        sys.stdout.flush()
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)

@@ -19,13 +19,13 @@ def main() -> None:
     # Get GitHub token from environment (GITHUB_TOKEN is automatically available in GitHub Actions)
     token = os.environ.get("GITHUB_TOKEN")
     if not token:
-        print("Error: GITHUB_TOKEN environment variable not set", file=sys.stderr)
+        print("Error: GITHUB_TOKEN environment variable not set")
         sys.exit(1)
 
     # Get repository name from environment
     repo_name = os.environ.get("GITHUB_REPOSITORY")
     if not repo_name:
-        print("Error: GITHUB_REPOSITORY environment variable not set", file=sys.stderr)
+        print("Error: GITHUB_REPOSITORY environment variable not set")
         sys.exit(1)
 
     # Initialize GitHub client
@@ -33,7 +33,7 @@ def main() -> None:
         github_client = GitHubClient(token, repo_name)
         print(f"GitHub client initialized for repository: {repo_name}")
     except Exception as e:
-        print(f"Error initializing GitHub client: {e}", file=sys.stderr)
+        print(f"Error initializing GitHub client: {e}")
         sys.exit(1)
 
     # Get Cargo.toml path from environment or default
@@ -45,18 +45,18 @@ def main() -> None:
         # PR mode: Get PR number and commit SHA
         pr_number_str = os.environ.get("PR_NUMBER")
         if not pr_number_str:
-            print("Error: PR_NUMBER environment variable not set (required for PR mode)", file=sys.stderr)
+            print("Error: PR_NUMBER environment variable not set (required for PR mode)")
             sys.exit(1)
 
         try:
             pr_number = int(pr_number_str)
         except ValueError:
-            print(f"Error: Invalid PR_NUMBER: {pr_number_str} (must be an integer)", file=sys.stderr)
+            print(f"Error: Invalid PR_NUMBER: {pr_number_str} (must be an integer)")
             sys.exit(1)
 
         commit_sha = os.environ.get("COMMIT_SHA")
         if not commit_sha:
-            print("Error: COMMIT_SHA environment variable not set (required for PR mode)", file=sys.stderr)
+            print("Error: COMMIT_SHA environment variable not set (required for PR mode)")
             sys.exit(1)
 
         # Calculate PR version
@@ -66,23 +66,19 @@ def main() -> None:
                 github_client, pr_number, commit_sha, repo_path=repo_root
             )
             tag_name = f"v{version}"  # For consistency, though not used in PR mode
-            # Flush stdout to ensure calculation output appears before any errors
-            sys.stdout.flush()
         except Exception as e:
-            print(f"Error calculating PR version: {e}", file=sys.stderr)
+            print(f"Error calculating PR version: {e}")
             sys.exit(1)
     else:
         # Release mode: Use existing logic
         if version_mode != "release":
-            print(f"Warning: Unknown VERSION_MODE '{version_mode}', defaulting to 'release'", file=sys.stderr)
+            print(f"Warning: Unknown VERSION_MODE '{version_mode}', defaulting to 'release'")
 
         try:
             print("Calculating new version...")
             version, tag_name = calculate_new_version(github_client, repo_path=repo_root)
-            # Flush stdout to ensure calculation output appears before any errors
-            sys.stdout.flush()
         except Exception as e:
-            print(f"Error calculating version: {e}", file=sys.stderr)
+            print(f"Error calculating version: {e}")
             sys.exit(1)
 
     # Update Cargo.toml (use full path)
@@ -99,8 +95,8 @@ def main() -> None:
                     cargo = tomlkit.parse(f.read())
                 package_name = cargo.get("package", {}).get("name", "moved_maker")
             except Exception as e:
-                print(f"Warning: Could not read package name from Cargo.toml: {e}", file=sys.stderr)
-                print("Using default package name: moved_maker", file=sys.stderr)
+                print(f"Warning: Could not read package name from Cargo.toml: {e}")
+                print("Using default package name: moved_maker")
                 package_name = "moved_maker"
 
             try:
@@ -114,16 +110,14 @@ def main() -> None:
                 )
                 print(f"✓ Cargo.lock updated to version {version}")
             except subprocess.CalledProcessError as e:
-                print(f"Error updating Cargo.lock: {e}", file=sys.stderr)
-                print(f"stdout: {e.stdout}", file=sys.stderr)
-                print(f"stderr: {e.stderr}", file=sys.stderr)
+                print(f"Error updating Cargo.lock: {e}")
+                print(f"stdout: {e.stdout}")
+                print(f"stderr: {e.stderr}")
                 sys.exit(1)
         else:
             print(f"ℹ Cargo.toml already at version {version}, no update needed")
     except Exception as e:
-        # Flush stdout to ensure calculation output appears before error message
-        sys.stdout.flush()
-        print(f"Error updating Cargo.toml: {e}", file=sys.stderr)
+        print(f"Error updating Cargo.toml: {e}")
         sys.exit(1)
 
     # Output behavior differs by mode
@@ -144,7 +138,7 @@ def main() -> None:
                 f.write(f"version={version}\n")
                 f.write(f"tag_name={tag_name}\n")
         except Exception as e:
-            print(f"Error writing to GITHUB_OUTPUT: {e}", file=sys.stderr)
+            print(f"Error writing to GITHUB_OUTPUT: {e}")
             sys.exit(1)
     else:
         # Fallback to stdout
@@ -156,7 +150,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        # Flush stdout to ensure any buffered output appears before error message
-        sys.stdout.flush()
-        print(f"Error: {e}", file=sys.stderr)
+        print(f"Error: {e}")
         sys.exit(1)

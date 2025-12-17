@@ -51,7 +51,7 @@ def get_latest_tag() -> Optional[str]:
             return result.stdout.strip()
         return None
     except Exception as e:
-        print(f"Error getting latest tag: {e}", file=sys.stderr)
+        print(f"Error getting latest tag: {e}")
         return None
 
 
@@ -76,10 +76,10 @@ def get_tag_timestamp(tag: str) -> int:
         )
         return int(result.stdout.strip())
     except subprocess.CalledProcessError as e:
-        print(f"Error getting tag timestamp for {tag}: {e}", file=sys.stderr)
+        print(f"Error getting tag timestamp for {tag}: {e}")
         raise ValueError(f"Tag {tag} not found or cannot be read") from e
     except ValueError as e:
-        print(f"Error parsing tag timestamp: {e}", file=sys.stderr)
+        print(f"Error parsing tag timestamp: {e}")
         raise
 
 
@@ -128,13 +128,13 @@ def get_commit_count(since_tag: Optional[str] = None) -> int:
         return count
     except subprocess.CalledProcessError as e:
         if since_tag:
-            print(f"Error getting commit count: {e}", file=sys.stderr)
+            print(f"Error getting commit count: {e}")
             raise ValueError(f"Tag {since_tag} not found") from e
         else:
-            print(f"Error getting commit count: {e}", file=sys.stderr)
+            print(f"Error getting commit count: {e}")
             raise ValueError("Failed to count commits") from e
     except ValueError as e:
-        print(f"Error parsing commit count: {e}", file=sys.stderr)
+        print(f"Error parsing commit count: {e}")
         raise
 
 
@@ -209,7 +209,7 @@ def calculate_version(
 
         return new_version
     except (InvalidVersion, ValueError, IndexError) as e:
-        print(f"Error calculating version: {e}", file=sys.stderr)
+        print(f"Error calculating version: {e}")
         raise InvalidVersion(f"Invalid base version: {base_version}") from e
 
 
@@ -286,8 +286,6 @@ def calculate_new_version(
         print(f"  Commit count: {commit_count}")
     print(f"  Calculated version: {new_version}")
     print("=" * 50)
-    # Flush stdout to ensure summary appears before function returns
-    sys.stdout.flush()
 
     return (new_version, f"v{new_version}")
 
@@ -390,7 +388,5 @@ def calculate_pr_version(
     print(f"  Commit SHA: {commit_sha} (shortened to {short_sha})")
     print(f"  PR version: {pr_version}")
     print("=" * 50)
-    # Flush stdout to ensure summary appears before function returns
-    sys.stdout.flush()
 
     return pr_version

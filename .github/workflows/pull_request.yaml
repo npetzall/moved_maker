@@ -287,9 +287,22 @@ jobs:
 
       - name: Rename binary with version
         run: |
+          set -euo pipefail
           VERSION="${{ needs.version.outputs.version }}"
-          mv target/${{ matrix.target }}/release/moved_maker \
-             target/${{ matrix.target }}/release/moved_maker-${VERSION}-${{ matrix.platform }}
+          SOURCE="target/${{ matrix.target }}/release/moved_maker"
+          DEST="target/${{ matrix.target }}/release/moved_maker-${VERSION}-${{ matrix.platform }}"
+
+          if [ ! -f "${SOURCE}" ]; then
+            echo "::error::Source binary not found at ${SOURCE}"
+            exit 1
+          fi
+
+          mv -v "${SOURCE}" "${DEST}"
+
+          if [ ! -f "${DEST}" ]; then
+            echo "::error::Rename failed - destination file not found at ${DEST}"
+            exit 1
+          fi
 
       - name: Install uv
         uses: astral-sh/setup-uv@d7d33e16d4ecbbea0da49ecb6fcc16df877ddac8  # v5
@@ -301,9 +314,9 @@ jobs:
           VERSION="${{ needs.version.outputs.version }}"
           cd .github/scripts/create-checksum
           uv run python -m create_checksum \
-            --file ../../target/${{ matrix.target }}/release/moved_maker-${VERSION}-${{ matrix.platform }} \
+            --file ${{ github.workspace }}/target/${{ matrix.target }}/release/moved_maker-${VERSION}-${{ matrix.platform }} \
             --algo sha256 \
-            --output ../../target/${{ matrix.target }}/release/moved_maker-${VERSION}-${{ matrix.platform }}.sha256
+            --output ${{ github.workspace }}/target/${{ matrix.target }}/release/moved_maker-${VERSION}-${{ matrix.platform }}.sha256
 
       - name: Install cargo-nextest
         run: cargo install cargo-nextest

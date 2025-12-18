@@ -109,9 +109,14 @@ def parse_coverage_json(json_path: str | Path) -> CoverageData:
 
         metric_data = totals[totals_key]
         percent = float(metric_data.get("percent", 0.0))
-        count = metric_data.get("count", {})
-        covered = int(count.get("covered", 0))
-        total = int(count.get("partial", 0)) + int(count.get("missed", 0)) + covered
+        # count is an integer (total count), covered is a direct field
+        count = int(metric_data.get("count", 0))
+        covered = int(metric_data.get("covered", 0))
+        # For branches, use notcovered if available, otherwise calculate from count
+        if totals_key == "branches" and "notcovered" in metric_data:
+            total = count  # count is the total for branches
+        else:
+            total = count  # count IS the total for lines and functions
 
         return CoverageMetrics(percent=percent, covered=covered, total=total)
 
@@ -131,18 +136,24 @@ def parse_coverage_json(json_path: str | Path) -> CoverageData:
             # Extract file-level metrics
             def extract_file_metrics(file_key: str) -> CoverageMetrics:
                 """Extract coverage metrics from file object."""
-                if file_key not in file_data:
+                # File metrics are under 'summary' key, not directly on file_data
+                if "summary" not in file_data:
                     return CoverageMetrics(percent=0.0, covered=0, total=0)
 
-                metric_data = file_data[file_key]
+                summary = file_data["summary"]
+                if file_key not in summary:
+                    return CoverageMetrics(percent=0.0, covered=0, total=0)
+
+                metric_data = summary[file_key]
                 percent = float(metric_data.get("percent", 0.0))
-                count = metric_data.get("count", {})
-                covered = int(count.get("covered", 0))
-                total = (
-                    int(count.get("partial", 0))
-                    + int(count.get("missed", 0))
-                    + covered
-                )
+                # count is an integer (total count), covered is a direct field
+                count = int(metric_data.get("count", 0))
+                covered = int(metric_data.get("covered", 0))
+                # For branches, use notcovered if available, otherwise use count
+                if file_key == "branches" and "notcovered" in metric_data:
+                    total = count  # count is the total for branches
+                else:
+                    total = count  # count IS the total for lines and functions
 
                 return CoverageMetrics(percent=percent, covered=covered, total=total)
 

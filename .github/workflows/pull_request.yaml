@@ -318,17 +318,6 @@ jobs:
             --algo sha256 \
             --output ${{ github.workspace }}/target/${{ matrix.target }}/release/moved_maker-${VERSION}-${{ matrix.platform }}.sha256
 
-      - name: Install cargo-nextest
-        run: cargo install cargo-nextest
-
-      - name: Generate test summary
-        if: always()
-        run: |
-          cd .github/scripts/test-summary
-          uv run python -m test_summary \
-            --xml-path ../../../target/nextest/**/test-results.xml \
-            --artifact-name test-results-pr-${{ matrix.platform }}
-
       - name: Upload binary and checksum as artifacts
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:

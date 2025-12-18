@@ -64,6 +64,23 @@ def test_generate_overall_section_below_threshold():
     assert "❌" in "\n".join(lines)
 
 
+def test_generate_overall_section_na_branch_coverage():
+    """Test overall coverage section with N/A branch coverage (total == 0)."""
+    # This scenario: lines and functions pass, but branches are N/A
+    # Overall status should be ✅ because N/A metrics are skipped
+    overall = OverallCoverage(
+        line_coverage=CoverageMetrics(percent=95.52, covered=1001, total=1048),
+        branch_coverage=CoverageMetrics(percent=0.0, covered=0, total=0),  # N/A
+        function_coverage=CoverageMetrics(percent=97.27, covered=107, total=110),
+    )
+
+    lines = generate_overall_section(overall, 80.0, 70.0, 85.0)
+
+    assert "**Status**: ✅" in lines
+    assert "N/A" in "\n".join(lines)  # Branch coverage should show N/A
+    assert "⚠️" in "\n".join(lines)  # Branch indicator should be ⚠️
+
+
 def test_generate_mermaid_chart():
     """Test Mermaid chart generation."""
     overall = OverallCoverage(

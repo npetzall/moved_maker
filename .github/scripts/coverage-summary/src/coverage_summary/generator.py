@@ -67,12 +67,22 @@ def generate_overall_section(
         overall.function_coverage.total,
     )
 
-    # Overall status
-    if (
-        overall.line_coverage.percent >= threshold_line
-        and overall.branch_coverage.percent >= threshold_branch
-        and overall.function_coverage.percent >= threshold_function
-    ):
+    # Overall status - only check thresholds for metrics that have data (total > 0)
+    # Skip N/A metrics (total == 0) as they indicate no items to cover, not insufficient coverage
+    line_pass = (
+        overall.line_coverage.total == 0
+        or overall.line_coverage.percent >= threshold_line
+    )
+    branch_pass = (
+        overall.branch_coverage.total == 0
+        or overall.branch_coverage.percent >= threshold_branch
+    )
+    function_pass = (
+        overall.function_coverage.total == 0
+        or overall.function_coverage.percent >= threshold_function
+    )
+
+    if line_pass and branch_pass and function_pass:
         overall_status = "✅"
     else:
         overall_status = "❌"

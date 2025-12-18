@@ -387,36 +387,6 @@ wheels = [
 ]
 
 [[package]]
-name = "release-version"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "packaging" },
-    { name = "pygithub" },
-    { name = "tomlkit" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "coverage" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-datadir" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "coverage", extras = ["toml"], marker = "extra == 'dev'", specifier = ">=7.5.0" },
-    { name = "packaging", specifier = ">=24.0" },
-    { name = "pygithub", specifier = ">=2.0.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0.0" },
-    { name = "pytest-datadir", marker = "extra == 'dev'", specifier = ">=1.4.0" },
-    { name = "tomlkit", specifier = ">=0.12.0" },
-]
-provides-extras = ["dev"]
-
-[[package]]
 name = "requests"
 version = "2.32.5"
 source = { registry = "https://pypi.org/simple" }
@@ -457,3 +427,33 @@ sdist = { url = "https://files.pythonhosted.org/packages/15/22/9ee70a2574a4f4599
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a7/c2/fe1e52489ae3122415c51f387e221dd0773709bad6c6cdaa599e8a2c5185/urllib3-2.5.0-py3-none-any.whl", hash = "sha256:e6b01673c0fa6a13e374b50871808eb3bf7046c4b125b216f6bf1cc604cff0dc", size = 129795, upload-time = "2025-06-18T14:07:40.39Z" },
 ]
+
+[[package]]
+name = "version"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "packaging" },
+    { name = "pygithub" },
+    { name = "tomlkit" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "coverage" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-datadir" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "coverage", extras = ["toml"], marker = "extra == 'dev'", specifier = ">=7.5.0" },
+    { name = "packaging", specifier = ">=24.0" },
+    { name = "pygithub", specifier = ">=2.0.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0.0" },
+    { name = "pytest-datadir", marker = "extra == 'dev'", specifier = ">=1.4.0" },
+    { name = "tomlkit", specifier = ">=0.12.0" },
+]
+provides-extras = ["dev"]

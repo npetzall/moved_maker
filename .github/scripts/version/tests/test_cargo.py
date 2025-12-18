@@ -82,6 +82,51 @@ def test_read_cargo_version_build_metadata(datadir):
     assert version == "1.0.0+build.1"
 
 
+def test_read_cargo_version_pr_with_build_metadata(datadir):
+    """Test reading Cargo.toml with PR version format (pre-release + build metadata)."""
+    cargo_toml = datadir / "pr_version_build_metadata.toml"
+    version = read_cargo_version(str(cargo_toml))
+    assert version == "0.2.1-pr26+87baede"
+
+
+def test_read_cargo_version_invalid_build_metadata():
+    """Test reading Cargo.toml with invalid build metadata format."""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
+        f.write(
+            """[package]
+name = "test"
+version = "1.0.0+invalid@metadata"
+"""
+        )
+        temp_path = Path(f.name)
+
+    try:
+        with pytest.raises(ValueError, match="Invalid build metadata format"):
+            read_cargo_version(str(temp_path))
+    finally:
+        if temp_path.exists():
+            temp_path.unlink()
+
+
+def test_read_cargo_version_empty_build_metadata():
+    """Test reading Cargo.toml with empty build metadata."""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
+        f.write(
+            """[package]
+name = "test"
+version = "1.0.0+"
+"""
+        )
+        temp_path = Path(f.name)
+
+    try:
+        with pytest.raises(ValueError, match="Build metadata cannot be empty"):
+            read_cargo_version(str(temp_path))
+    finally:
+        if temp_path.exists():
+            temp_path.unlink()
+
+
 def test_update_cargo_version_valid(temp_cargo_toml):
     """Test updating version in valid Cargo.toml."""
     new_version = "2.0.0"
@@ -141,3 +186,34 @@ def test_update_cargo_version_unchanged(temp_cargo_toml):
 
     # Verify version is still the same
     assert read_cargo_version(str(temp_cargo_toml)) == current_version
+
+
+def test_update_cargo_version_pr_with_build_metadata(temp_cargo_toml):
+    """Test updating Cargo.toml with PR version format (pre-release + build metadata)."""
+    pr_version = "0.2.1-pr26+87baede"
+    result = update_cargo_version(str(temp_cargo_toml), pr_version)
+
+    # Verify update
+    updated_version = read_cargo_version(str(temp_cargo_toml))
+    assert updated_version == pr_version
+    # Verify return value is True when version changes
+    assert result is True
+
+
+def test_update_cargo_version_pr_with_build_metadata_unchanged(datadir):
+    """Test updating with same PR version (should return False)."""
+    cargo_toml = datadir / "pr_version_build_metadata.toml"
+    current_version = read_cargo_version(str(cargo_toml))
+    original_content = cargo_toml.read_text()
+
+    # Try to update with the same version
+    result = update_cargo_version(str(cargo_toml), current_version)
+
+    # Verify return value is False when version unchanged
+    assert result is False
+
+    # Verify file was not modified
+    assert cargo_toml.read_text() == original_content
+
+    # Verify version is still the same
+    assert read_cargo_version(str(cargo_toml)) == current_version

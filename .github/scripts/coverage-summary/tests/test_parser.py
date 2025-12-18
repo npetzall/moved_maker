@@ -112,7 +112,7 @@ def test_parse_coverage_json_invalid_structure(temp_dir):
     with json_file.open("w", encoding="utf-8") as f:
         json.dump({"invalid": "structure"}, f)
 
-    with pytest.raises(ValueError, match="expected non-empty array"):
+    with pytest.raises(ValueError, match="expected dictionary with 'data' key or array"):
         parse_coverage_json(json_file)
 
 
@@ -142,3 +142,29 @@ def test_parse_coverage_json_missing_optional_fields(
 
     assert result.overall.line_coverage.percent == pytest.approx(95.39)
     assert len(result.files) == 0
+
+
+def test_parse_coverage_json_dict_format():
+    """Test parsing coverage JSON with dictionary format (actual cargo-llvm-cov format)."""
+    # Load fixture file with dictionary format
+    fixture_path = Path(__file__).parent / "fixtures" / "coverage.json"
+    result = parse_coverage_json(fixture_path)
+
+    assert isinstance(result, CoverageData)
+    assert result.overall.line_coverage.percent == pytest.approx(95.39)
+    assert result.overall.line_coverage.covered == 200
+    assert result.overall.line_coverage.total == 215  # 200 + 5 + 10
+
+    assert result.overall.branch_coverage.percent == pytest.approx(90.0)
+    assert result.overall.branch_coverage.covered == 45
+    assert result.overall.branch_coverage.total == 50  # 45 + 2 + 3
+
+    assert result.overall.function_coverage.percent == pytest.approx(94.74)
+    assert result.overall.function_coverage.covered == 18
+    assert result.overall.function_coverage.total == 19  # 18 + 0 + 1
+
+    assert len(result.files) == 2
+    assert result.files[0].path == "src/main.rs"
+    assert result.files[0].line_coverage.percent == pytest.approx(100.0)
+    assert result.files[1].path == "src/lib.rs"
+    assert result.files[1].line_coverage.percent == pytest.approx(90.0)

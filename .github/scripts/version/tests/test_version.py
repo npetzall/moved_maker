@@ -280,9 +280,12 @@ def test_calculate_pr_version_first_release():
 
     with patch("version.version.get_latest_tag") as mock_get_tag, patch(
         "version.version.read_cargo_version"
-    ) as mock_read_cargo:
+    ) as mock_read_cargo, patch(
+        "version.version.get_commit_count"
+    ) as mock_commit_count:
         mock_get_tag.return_value = None
         mock_read_cargo.return_value = "0.1.0"
+        mock_commit_count.return_value = 0
 
         pr_version = calculate_pr_version(
             mock_github_client, pr_number=456, commit_sha="def9876543210abc9876543210def9876543210", repo_path="."

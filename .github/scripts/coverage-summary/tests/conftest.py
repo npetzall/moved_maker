@@ -22,46 +22,62 @@ def sample_coverage_json_high():
             "totals": {
                 "lines": {
                     "percent": 95.39,
-                    "count": {"covered": 200, "partial": 5, "missed": 10},
+                    "count": 215,  # Integer: 200 + 5 + 10
+                    "covered": 200,
                 },
                 "branches": {
                     "percent": 90.0,
-                    "count": {"covered": 45, "partial": 2, "missed": 3},
+                    "count": 50,  # Integer: 45 + 2 + 3
+                    "covered": 45,
+                    "notcovered": 5,  # 2 + 3
                 },
                 "functions": {
                     "percent": 94.74,
-                    "count": {"covered": 18, "partial": 0, "missed": 1},
+                    "count": 19,  # Integer: 18 + 0 + 1
+                    "covered": 18,
                 },
             },
             "files": [
                 {
                     "filename": "src/main.rs",
-                    "lines": {
-                        "percent": 100.0,
-                        "count": {"covered": 50, "partial": 0, "missed": 0},
-                    },
-                    "branches": {
-                        "percent": 100.0,
-                        "count": {"covered": 10, "partial": 0, "missed": 0},
-                    },
-                    "functions": {
-                        "percent": 100.0,
-                        "count": {"covered": 5, "partial": 0, "missed": 0},
+                    "summary": {
+                        "lines": {
+                            "percent": 100.0,
+                            "count": 50,
+                            "covered": 50,
+                        },
+                        "branches": {
+                            "percent": 100.0,
+                            "count": 10,
+                            "covered": 10,
+                            "notcovered": 0,
+                        },
+                        "functions": {
+                            "percent": 100.0,
+                            "count": 5,
+                            "covered": 5,
+                        },
                     },
                 },
                 {
                     "filename": "src/lib.rs",
-                    "lines": {
-                        "percent": 90.0,
-                        "count": {"covered": 90, "partial": 5, "missed": 5},
-                    },
-                    "branches": {
-                        "percent": 85.0,
-                        "count": {"covered": 17, "partial": 2, "missed": 1},
-                    },
-                    "functions": {
-                        "percent": 92.0,
-                        "count": {"covered": 23, "partial": 0, "missed": 2},
+                    "summary": {
+                        "lines": {
+                            "percent": 90.0,
+                            "count": 100,  # 90 + 5 + 5
+                            "covered": 90,
+                        },
+                        "branches": {
+                            "percent": 85.0,
+                            "count": 20,  # 17 + 2 + 1
+                            "covered": 17,
+                            "notcovered": 3,  # 2 + 1
+                        },
+                        "functions": {
+                            "percent": 92.0,
+                            "count": 25,  # 23 + 0 + 2
+                            "covered": 23,
+                        },
                     },
                 },
             ],
@@ -77,31 +93,41 @@ def sample_coverage_json_low():
             "totals": {
                 "lines": {
                     "percent": 60.0,
-                    "count": {"covered": 60, "partial": 10, "missed": 30},
+                    "count": 100,  # 60 + 10 + 30
+                    "covered": 60,
                 },
                 "branches": {
                     "percent": 50.0,
-                    "count": {"covered": 10, "partial": 5, "missed": 5},
+                    "count": 20,  # 10 + 5 + 5
+                    "covered": 10,
+                    "notcovered": 10,  # 5 + 5
                 },
                 "functions": {
                     "percent": 70.0,
-                    "count": {"covered": 7, "partial": 0, "missed": 3},
+                    "count": 10,  # 7 + 0 + 3
+                    "covered": 7,
                 },
             },
             "files": [
                 {
                     "filename": "src/main.rs",
-                    "lines": {
-                        "percent": 50.0,
-                        "count": {"covered": 25, "partial": 5, "missed": 20},
-                    },
-                    "branches": {
-                        "percent": 40.0,
-                        "count": {"covered": 4, "partial": 2, "missed": 4},
-                    },
-                    "functions": {
-                        "percent": 60.0,
-                        "count": {"covered": 3, "partial": 0, "missed": 2},
+                    "summary": {
+                        "lines": {
+                            "percent": 50.0,
+                            "count": 50,  # 25 + 5 + 20
+                            "covered": 25,
+                        },
+                        "branches": {
+                            "percent": 40.0,
+                            "count": 10,  # 4 + 2 + 4
+                            "covered": 4,
+                            "notcovered": 6,  # 2 + 4
+                        },
+                        "functions": {
+                            "percent": 60.0,
+                            "count": 5,  # 3 + 0 + 2
+                            "covered": 3,
+                        },
                     },
                 },
             ],
@@ -117,15 +143,19 @@ def sample_coverage_json_no_branches():
             "totals": {
                 "lines": {
                     "percent": 95.39,
-                    "count": {"covered": 200, "partial": 5, "missed": 10},
+                    "count": 215,  # 200 + 5 + 10
+                    "covered": 200,
                 },
                 "branches": {
                     "percent": 0.0,
-                    "count": {"covered": 0, "partial": 0, "missed": 0},
+                    "count": 0,
+                    "covered": 0,
+                    "notcovered": 0,
                 },
                 "functions": {
                     "percent": 94.74,
-                    "count": {"covered": 18, "partial": 0, "missed": 1},
+                    "count": 19,  # 18 + 0 + 1
+                    "covered": 18,
                 },
             },
             "files": [],
@@ -141,15 +171,19 @@ def sample_coverage_json_empty():
             "totals": {
                 "lines": {
                     "percent": 0.0,
-                    "count": {"covered": 0, "partial": 0, "missed": 0},
+                    "count": 0,
+                    "covered": 0,
                 },
                 "branches": {
                     "percent": 0.0,
-                    "count": {"covered": 0, "partial": 0, "missed": 0},
+                    "count": 0,
+                    "covered": 0,
+                    "notcovered": 0,
                 },
                 "functions": {
                     "percent": 0.0,
-                    "count": {"covered": 0, "partial": 0, "missed": 0},
+                    "count": 0,
+                    "covered": 0,
                 },
             },
             "files": [],

@@ -149,6 +149,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+        with:
+          # Use fetch-depth: 2 to ensure we have the merge commit (HEAD) and its parent (HEAD^1)
+          # This allows us to compare HEAD^1 (base branch) with HEAD (merge commit) even when
+          # the PR branch has no common ancestor with the base branch
+          fetch-depth: 2
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@0b1efabc08b657293548b77fb76cc02d26091c7e  # master
@@ -191,8 +196,11 @@ jobs:
         id: changed_files
         run: |
           # Get changed Rust source files in PR for coverage summary
-          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }} || true
-          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep '\.rs$' | grep '^src/' || true)
+          # HEAD is the merge commit created by GitHub (refs/remotes/pull/N/merge)
+          # HEAD^1 is the first parent (base branch), HEAD^2 is the second parent (PR branch tip)
+          # Comparing HEAD^1 with HEAD shows all changes introduced by the PR
+          # This works even when the PR branch has no common ancestor with the base branch
+          CHANGED_FILES=$(git diff --name-only HEAD^1 HEAD | grep '\.rs$' | grep '^src/' || true)
           if [ -n "$CHANGED_FILES" ]; then
             echo "$CHANGED_FILES" > changed-files.txt
             echo "Changed files detected:"

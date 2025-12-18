@@ -5,6 +5,7 @@ requires-python = ">=3.13"
 dependencies = [
     "pygithub>=2.0.0",
     "packaging>=24.0",
+    "semver>=3.0.0",
     "tomlkit>=0.12.0",
 ]
 

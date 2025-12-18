@@ -101,7 +101,7 @@ version = "1.0.0+invalid@metadata"
         temp_path = Path(f.name)
 
     try:
-        with pytest.raises(ValueError, match="Invalid build metadata format"):
+        with pytest.raises(ValueError, match="Invalid version format in Cargo.toml"):
             read_cargo_version(str(temp_path))
     finally:
         if temp_path.exists():
@@ -120,7 +120,7 @@ version = "1.0.0+"
         temp_path = Path(f.name)
 
     try:
-        with pytest.raises(ValueError, match="Build metadata cannot be empty"):
+        with pytest.raises(ValueError, match="Invalid version format in Cargo.toml"):
             read_cargo_version(str(temp_path))
     finally:
         if temp_path.exists():

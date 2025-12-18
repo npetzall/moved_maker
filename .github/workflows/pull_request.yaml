@@ -221,13 +221,13 @@ jobs:
           # Generate markdown coverage summary for workflow run summary
           # Summary includes overall coverage, Mermaid chart, and file breakdown
           cd .github/scripts/coverage-summary
-          if [ -s ../../../changed-files.txt ]; then
+          if [ -s "${{ github.workspace }}/changed-files.txt" ]; then
             uv run python -m coverage_summary \
-              --json-path ../../../coverage.json \
-              --changed-files ../../../changed-files.txt || true
+              --json-path "${{ github.workspace }}/coverage.json" \
+              --changed-files "${{ github.workspace }}/changed-files.txt" || true
           else
             uv run python -m coverage_summary \
-              --json-path ../../../coverage.json || true
+              --json-path "${{ github.workspace }}/coverage.json" || true
           fi
 
   version:

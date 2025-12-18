@@ -46,6 +46,10 @@ def parse_coverage_json(json_path: str | Path) -> CoverageData:
     """
     Parse coverage JSON file from cargo llvm-cov.
 
+    Supports two JSON formats:
+    1. Dictionary format: {"data": [{...}]} - used by cargo-llvm-cov
+    2. Array format: [{...}] - for backward compatibility
+
     Args:
         json_path: Path to coverage JSON file
 
@@ -70,10 +74,24 @@ def parse_coverage_json(json_path: str | Path) -> CoverageData:
             f"Failed to parse JSON file {json_path}: {e}", e.doc, e.pos
         ) from e
 
-    # Validate JSON structure
-    if not isinstance(data, list) or len(data) == 0:
+    # Handle dictionary format with 'data' key (actual cargo-llvm-cov format)
+    if isinstance(data, dict):
+        if "data" not in data:
+            raise ValueError(
+                "Invalid JSON structure: expected dictionary with 'data' key or array, "
+                f"got dictionary without 'data' key"
+            )
+        if not isinstance(data["data"], list) or len(data["data"]) == 0:
+            raise ValueError(
+                "Invalid JSON structure: 'data' key must contain a non-empty array, "
+                f"got {type(data['data'])}"
+            )
+        data = data["data"]
+    # Handle direct array format (for backward compatibility)
+    elif not isinstance(data, list) or len(data) == 0:
         raise ValueError(
-            f"Invalid JSON structure: expected non-empty array, got {type(data)}"
+            f"Invalid JSON structure: expected non-empty array or dictionary with 'data' key, "
+            f"got {type(data)}"
         )
 
     first_item = data[0]

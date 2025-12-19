@@ -82,7 +82,7 @@ jobs:
         run: cargo geiger --output-format Json > geiger-report.json || [ $? -eq 1 ]
 
       - name: Upload geiger report
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6.0.0
         if: always()
         with:
           name: geiger-report
@@ -211,7 +211,7 @@ jobs:
         if: always()
 
       - name: Upload test results
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6.0.0
         if: always()
         with:
           name: test-results-${{ matrix.os }}-${{ matrix.target }}
@@ -259,7 +259,7 @@ jobs:
             --output ${{ github.workspace }}/target/${{ matrix.target }}/release/${{ matrix.artifact_name }}.sha256
 
       - name: Upload artifact (binary and checksum)
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6.0.0
         with:
           name: ${{ matrix.artifact_name }}
           path: |

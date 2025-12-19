@@ -226,8 +226,21 @@ jobs:
 
       - name: Rename binary for platform-specific release
         run: |
-          mv target/${{ matrix.target }}/release/moved_maker \
-             target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+          set -euo pipefail
+          SOURCE="target/${{ matrix.target }}/release/moved_maker"
+          DEST="target/${{ matrix.target }}/release/${{ matrix.artifact_name }}"
+
+          if [ ! -f "${SOURCE}" ]; then
+            echo "::error::Source binary not found at ${SOURCE}"
+            exit 1
+          fi
+
+          mv -v "${SOURCE}" "${DEST}"
+
+          if [ ! -f "${DEST}" ]; then
+            echo "::error::Rename failed - destination file not found at ${DEST}"
+            exit 1
+          fi
 
       - name: Install cargo-audit for binary auditing
         run: cargo install cargo-audit
@@ -241,9 +254,9 @@ jobs:
         run: |
           cd .github/scripts/create-checksum
           uv run python -m create_checksum \
-            --file ../../target/${{ matrix.target }}/release/${{ matrix.artifact_name }} \
+            --file ${{ github.workspace }}/target/${{ matrix.target }}/release/${{ matrix.artifact_name }} \
             --algo sha256 \
-            --output ../../target/${{ matrix.target }}/release/${{ matrix.artifact_name }}.sha256
+            --output ${{ github.workspace }}/target/${{ matrix.target }}/release/${{ matrix.artifact_name }}.sha256
 
       - name: Upload artifact (binary and checksum)
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0

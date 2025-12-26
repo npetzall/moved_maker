@@ -16,7 +16,7 @@ env_logger = "0.11"
 anyhow = "1.0"
 
 [dev-dependencies]
-tempfile = "3.10"
+tempfile = "3.24"
 pretty_assertions = "1.4"
 
 [lints.rust]

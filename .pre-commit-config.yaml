@@ -27,7 +27,7 @@ repos:
     hooks:
       - id: cargo-fmt
         name: cargo fmt
-        entry: bash -c 'cargo fmt --all -- --check'
+        entry: cargo fmt --all -- --check
         language: system
         types: [rust]
         pass_filenames: false
@@ -35,7 +35,7 @@ repos:
 
       - id: cargo-check
         name: cargo check
-        entry: bash -c 'cargo check --all-features --all-targets'
+        entry: cargo check --all-features --all-targets
         language: system
         types: [rust]
         pass_filenames: false
@@ -43,7 +43,7 @@ repos:
 
       - id: cargo-clippy
         name: cargo clippy
-        entry: bash -c 'cargo clippy --all-features --all-targets -- -D warnings'
+        entry: cargo clippy --all-features --all-targets -- -D warnings
         language: system
         types: [rust]
         pass_filenames: false
@@ -51,7 +51,7 @@ repos:
 
       - id: cargo-test
         name: cargo test (nextest)
-        entry: bash -c 'cargo nextest run --all-features --all-targets'
+        entry: cargo nextest run --all-features --all-targets
         language: system
         types: [rust]
         pass_filenames: false
@@ -60,7 +60,7 @@ repos:
 
       - id: cargo-deny
         name: cargo deny check
-        entry: bash -c 'cargo deny check --config .config/deny.toml'
+        entry: cargo deny check --config .config/deny.toml
         language: system
         types: [rust]
         pass_filenames: false
@@ -69,11 +69,19 @@ repos:
 
       - id: cargo-audit
         name: cargo audit
-        entry: bash -c 'cargo audit --deny warnings'
+        entry: cargo audit --deny warnings
         language: system
         types: [rust]
         pass_filenames: false
         always_run: true
+        stages: [pre-commit]
+
+      - id: mise-lock
+        name: mise lock
+        entry: mise lock
+        language: system
+        files: mise.toml
+        always_run: false
         stages: [pre-commit]
 
   # Secret scanning

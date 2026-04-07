@@ -2,7 +2,29 @@
 
 This document covers how to build, run, test, and develop this project.
 
+## Development environment (mise)
+
+The repository uses [mise](https://mise.jdx.dev/) to install pinned versions of Rust, Python, `uv`, `jq`, `pre-commit`, and several Cargo-based CLIs (including `cargo-nextest`, `cargo-llvm-cov`, and the security tools referenced elsewhere in this guide). Configuration is in `mise.toml`; **`mise.lock`** pins resolved versions for reproducible installs.
+
+From the repository root:
+
+1. Install mise ([getting started](https://mise.jdx.dev/getting-started.html)).
+2. Run `mise install` to install tools from the lockfile.
+
+That run triggers **postinstall** hooks (see `[hooks].postinstall` in `mise.toml`) which run two tasks in order:
+
+- **`setup-rust`** — Configures the mise-managed Rust toolchain: adds `rustfmt`, `clippy`, `llvm-tools-preview`, and the cross-compilation targets used in this repo (via `rustup` against the active toolchain).
+- **`setup-pre-commit`** — Installs the `pre-commit` CLI with [pre-commit-uv](https://github.com/astral-sh/pre-commit-uv) using `uv tool install … --with pre-commit-uv`, then runs `pre-commit install` so Git hooks are registered in this clone.
+
+Re-run either task after tool updates or a fresh clone if something is missing: `mise run setup-rust` or `mise run setup-pre-commit`.
+
+Activate mise in your shell (or prefix commands with `mise x --`) so those tools are on your `PATH`. For more detail, see the [mise section in TOOLING.md](TOOLING.md#mise).
+
+If you do not use mise, install an appropriate Rust toolchain with [rustup](https://rustup.rs/) and install the other tools (for example `cargo-nextest`, `cargo-llvm-cov`) as described in the sections below.
+
 ## Installation
+
+You need a Rust toolchain and Cargo (via mise above, or rustup). Then build the binary:
 
 ```bash
 cargo build --release
@@ -52,10 +74,16 @@ This project uses [cargo-nextest](https://nexte.st/) for faster test execution a
 ### Running Tests
 
 **Recommended: Use cargo-nextest** (faster, up to 3x faster than `cargo test`):
-```bash
-# Install cargo-nextest (if not already installed)
-cargo install cargo-nextest
 
+With mise, `cargo-nextest` is installed by `mise install` (see [Development environment (mise)](#development-environment-mise)). Otherwise install it manually:
+
+```bash
+cargo install cargo-nextest
+```
+
+Run tests:
+
+```bash
 # Run all tests
 cargo nextest run
 
@@ -86,12 +114,21 @@ This project uses [pre-commit](https://pre-commit.com/) to enforce code quality 
 
 ### Installation
 
-**Preferred method (using uv):**
+**With mise (default for this repository):**
+
+After `mise install`, the **postinstall** hook runs the `setup-pre-commit` task: it installs `pre-commit` with `pre-commit-uv` via `uv tool install` (exact versions are in the `setup-pre-commit` task in `mise.toml`) and runs `pre-commit install`. You do not need a separate install step unless you skipped mise or the task failed.
+
+To repeat that setup: `mise run setup-pre-commit`.
+
+**Without mise (install pre-commit with uv):**
+
+Install [uv](https://docs.astral.sh/uv/), then install the `pre-commit` CLI with [pre-commit-uv](https://github.com/astral-sh/pre-commit-uv) so hook environments are built with uv instead of pip:
+
 ```bash
-uv tool install pre-commit
+uv tool install pre-commit --with pre-commit-uv
 ```
 
-**Alternative methods:**
+**Other install methods:**
 ```bash
 # macOS (Homebrew)
 brew install pre-commit
@@ -102,12 +139,13 @@ pip install pre-commit
 
 ### Setup
 
-After installing pre-commit, install the hooks:
+If pre-commit was **not** installed by `mise run setup-pre-commit`, register Git hooks after installing the CLI:
+
 ```bash
 pre-commit install
 ```
 
-This automatically installs both `pre-commit` and `commit-msg` hooks.
+This installs both `pre-commit` and `commit-msg` hooks (the mise task runs the same command for you).
 
 ### Running Hooks Manually
 
@@ -247,11 +285,13 @@ Current coverage: Line 91.52%, Function 91.23% ✅
 ### Generating Coverage Reports Locally
 
 **Prerequisites:**
-```bash
-# Install llvm-tools-preview component
-rustup component add llvm-tools-preview
 
-# Install cargo-llvm-cov
+With mise, `mise install` provides `cargo-llvm-cov`, and the `setup-rust` task adds `llvm-tools-preview` to the managed toolchain. If needed, run `mise run setup-rust` again.
+
+Without mise:
+
+```bash
+rustup component add llvm-tools-preview
 cargo install cargo-llvm-cov
 ```
 

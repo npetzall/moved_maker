@@ -23,33 +23,17 @@ jobs:
           # while ensuring compatibility with rust-cache action (which requires a normal checkout)
           fetch-depth: 1
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@f7ccc83f9ed1e5b9c81d8a67d7ad1a747e22a561  # master
+      - name: Install using Mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151
         with:
-          toolchain: 1.90.0
-          components: clippy rustfmt llvm-tools-preview
+          version: 2026.4.5
+          install: true
+          cache: true
 
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5  # v2.8.2
         with:
           shared-key: "rust-cache"
           cache-targets: false
-
-      - name: Install security tools
-        run: cargo install cargo-deny cargo-audit cargo-auditable
-
-      - name: Install cargo-geiger
-        run: cargo install --locked cargo-geiger
-
-      - name: Install cargo-nextest
-        run: cargo install cargo-nextest@0.9.128 --locked
-
-      - name: Install cargo-llvm-cov
-        run: cargo install cargo-llvm-cov
-
-      # Note: Pre-commit is NOT installed here because:
-      # 1. rust-cache doesn't cache Python packages (pre-commit is a Python tool)
-      # 2. The pre-commit job installs it fresh each run anyway
-      # 3. Installing it here provides no benefit to other workflows
 
       - name: Fetch dependencies
         run: cargo fetch

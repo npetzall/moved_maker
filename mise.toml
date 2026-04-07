@@ -1,0 +1,39 @@
+[settings]
+experimental = true
+
+[tools]
+"cargo:cargo-audit" = "latest"
+"cargo:cargo-auditable" = "latest"
+"cargo:cargo-deny" = "latest"
+"cargo:cargo-geiger" = "latest"
+"cargo:cargo-llvm-cov" = "latest"
+"cargo:cargo-nextest" = "latest"
+jq = "latest"
+"python" = "3.13"
+rust = { version = "1.90.0" }
+uv = "latest"
+
+[env]
+UV_PYTHON = { value = "{{ tools.python.path }}", tools = true }
+
+[tasks.setup-rust]
+run = """
+    RUST_TOOLCHAIN=$(mise ls --current rust --json | mise x -- jq -r '.[0].version')
+    rustup component add --toolchain $RUST_TOOLCHAIN clippy
+    rustup component add --toolchain $RUST_TOOLCHAIN rustfmt
+    rustup component add --toolchain $RUST_TOOLCHAIN llvm-tools-preview
+    rustup target add --toolchain $RUST_TOOLCHAIN x86_64-unknown-linux-gnu
+    rustup target add --toolchain $RUST_TOOLCHAIN aarch64-apple-darwin
+"""
+
+[tasks.setup-pre-commit]
+run = """
+    uv tool install pre-commit==4.5.1 --with pre-commit-uv==4.2.1
+    pre-commit install
+"""
+
+[hooks]
+postinstall = [
+    "mise run setup-rust",
+    "mise run setup-pre-commit",
+]

@@ -2,6 +2,26 @@
 
 This document describes the development tools and configurations used in this project.
 
+## mise
+
+The project uses [mise](https://mise.jdx.dev/) (formerly rtx) to install and pin development tool versions in one place.
+
+**Configuration**: `mise.toml` declares tools (for example Rust, Python, `uv`, `jq`, `pre-commit`, and Cargo-installed CLIs such as `cargo-nextest` and `cargo-deny`). **`mise.lock`** records resolved versions for reproducible installs; commit lockfile changes when you update tools.
+
+**Setup** (from the repository root):
+
+1. Install mise by following the [mise installation docs](https://mise.jdx.dev/getting-started.html).
+2. Run `mise install` to install the versions from the lockfile.
+
+After installs, mise runs **postinstall** hooks (`[hooks].postinstall` in `mise.toml`) in order:
+
+- **`setup-rust`** — Configures the mise-managed Rust toolchain (`rustfmt`, `clippy`, `llvm-tools-preview`, and project cross-compilation targets via `rustup`).
+- **`setup-pre-commit`** — Installs `pre-commit` with [pre-commit-uv](https://github.com/astral-sh/pre-commit-uv) using `uv tool install … --with pre-commit-uv`, then runs `pre-commit install` for this repository.
+
+Re-run a task if needed: `mise run setup-rust` or `mise run setup-pre-commit`.
+
+**Usage**: With mise activated in your shell (or `mise x -- <command>`), tools on your `PATH` match the project. For day-to-day commands, see [DEVELOPMENT.md](DEVELOPMENT.md) and the sections below.
+
 ## Security
 
 The project uses a comprehensive set of security tools to ensure dependency safety, license compliance, and vulnerability detection.
@@ -159,12 +179,19 @@ The project uses [pre-commit](https://pre-commit.com/) to enforce code quality s
 
 ### Installation
 
-**Preferred method (using uv):**
+**With mise (default for this repository):**
+
+`mise install` runs the **postinstall** `setup-pre-commit` task, which installs `pre-commit` with `pre-commit-uv` via `uv` and runs `pre-commit install`. See the `setup-pre-commit` task in `mise.toml` for pinned versions. To run that setup again: `mise run setup-pre-commit`.
+
+**Without mise:**
+
+Install [uv](https://docs.astral.sh/uv/), then:
+
 ```bash
-uv tool install pre-commit
+uv tool install pre-commit --with pre-commit-uv
 ```
 
-**Alternative methods:**
+**Other methods:**
 ```bash
 # macOS (Homebrew)
 brew install pre-commit
@@ -175,12 +202,13 @@ pip install pre-commit
 
 ### Setup
 
-After installing pre-commit, install the hooks:
+If you did not use mise’s `setup-pre-commit` task, install Git hooks after installing the CLI:
+
 ```bash
 pre-commit install
 ```
 
-This automatically installs both `pre-commit` and `commit-msg` hooks.
+This installs both `pre-commit` and `commit-msg` hooks.
 
 ### Configuration
 

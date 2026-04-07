@@ -43,10 +43,12 @@ jobs:
       - name: Fetch all tags
         run: git fetch --tags --force
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@ed21f2f24f8dd64503750218de024bcf64c7250a  # v5
+      - name: Install using Mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151
         with:
-          python-version: "3.13"
+          version: 2026.4.5
+          install: true
+          cache: true
 
       - name: Calculate version from PR labels
         id: version

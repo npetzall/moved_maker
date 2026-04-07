@@ -24,7 +24,7 @@ jobs:
         run: cargo install cargo-llvm-cov
 
       - name: Install cargo-nextest (for caching)
-        run: cargo install cargo-nextest
+        run: cargo install cargo-nextest@0.9.128 --locked
 
       - name: Install security tools
         run: cargo install cargo-deny cargo-audit cargo-auditable
@@ -71,7 +71,7 @@ jobs:
           cache-on-failure: false
 
       - name: Install cargo-nextest
-        run: cargo install cargo-nextest
+        run: cargo install cargo-nextest@0.9.128 --locked
 
       - name: Run tests
         run: cargo nextest run
@@ -117,7 +117,7 @@ jobs:
           cache-on-failure: false
 
       - name: Install cargo-nextest
-        run: cargo install cargo-nextest
+        run: cargo install cargo-nextest@0.9.128 --locked
 
       - name: Run tests
         run: cargo nextest run
@@ -168,7 +168,7 @@ jobs:
           cache-on-failure: false
 
       - name: Install cargo-nextest
-        run: cargo install cargo-nextest
+        run: cargo install cargo-nextest@0.9.128 --locked
 
       - name: Install cargo-llvm-cov
         run: cargo install cargo-llvm-cov
@@ -362,7 +362,7 @@ jobs:
         run: pip install pre-commit
 
       - name: Install pre-commit dependencies
-        run: cargo install cargo-nextest cargo-deny cargo-audit
+        run: cargo install cargo-nextest@0.9.128 cargo-deny cargo-audit --locked
 
       - name: Run pre-commit
         run: pre-commit run --all-files --fail-fast

@@ -41,7 +41,7 @@ jobs:
         run: cargo install --locked cargo-geiger
 
       - name: Install cargo-nextest
-        run: cargo install cargo-nextest
+        run: cargo install cargo-nextest@0.9.128 --locked
 
       - name: Install cargo-llvm-cov
         run: cargo install cargo-llvm-cov

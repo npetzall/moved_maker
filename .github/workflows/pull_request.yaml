@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
 
       - name: Install using Mise
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d
         with:
           version: 2026.4.5
           install: true
@@ -49,7 +49,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
 
       - name: Install using Mise
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d
         with:
           version: 2026.4.5
           install: true
@@ -88,7 +88,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
 
       - name: Install using Mise
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d
         with:
           version: 2026.4.5
           install: true
@@ -132,7 +132,7 @@ jobs:
           fetch-depth: 2
 
       - name: Install using Mise
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d
         with:
           version: 2026.4.5
           install: true
@@ -211,7 +211,7 @@ jobs:
         run: git fetch --tags --force
 
       - name: Install using Mise
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d
         with:
           version: 2026.4.5
           install: true
@@ -247,7 +247,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
 
       - name: Install using Mise
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d
         with:
           version: 2026.4.5
           install: true
@@ -307,7 +307,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
 
       - name: Install using Mise
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d
         with:
           version: 2026.4.5
           install: true
